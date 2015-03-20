@@ -1,12 +1,15 @@
 <?php
+/**
+ * Master configuration file for the EmailQueue Plugin
+ */
 return [
     'EmailQueue' => [
         /** 
          * Master configuration settings
          */
         'master' => [
-            'deleteAfterSend' => FALSE, // TRUE- to delete entry from database, FALSE- update entry in database
-            'testingmodeOverride' => TRUE // TRUE- overrides the settings to $config['override'], FALSE- default settings
+            'deleteAfterSend'   => false, // TRUE- to delete entry from database, FALSE- update entry in database
+            'testingmodeOverride' => true, // TRUE- overrides the settings to $config['override'], FALSE- default settings
             ], # end of MASTER
 
 
@@ -17,8 +20,8 @@ return [
          * These will only be used if { testingmodeOverride : true } in MASTER settings
          */
         'override' => [
-            'from' => 'override_sender@gmail.com',
-            'to' => 'testing@email.com',
+            'from'              => 'override_sender@email.com',
+            'to_addr'           => 'override_to@email.com',
             ], # end of OVERRIDE
 
 
@@ -29,8 +32,10 @@ return [
          * Things like the default 'from' setting can be set in here and will apply to all emails unless replaced by values from the DATABASE, a SPECIFIC template setting, or the OVERRIDE
          */
         'default' => [
-            'from' => 'sender@gmail.com',
-            'emailFormat' => 'both',
+            'cc_addr'           => ['default_cc@email.com'],
+            'emailFormat'       => 'both',
+            'from'              => 'default_sender@email.com',
+            'layout'            => 'EmailQueue.default',
             ], # end of DEFAULT
 
 
@@ -46,12 +51,12 @@ return [
          *     }
          */
         'specific' => [
-            'test' => [                 
-                'subject'       => 'This is just a test!', 
-                'template'      => 'test',  
-                'layout'        => 'default', 
+            'demo' => [                 
+                'subject'       => 'This is just a test!',
+                'template'      => 'EmailQueue.test',  
                 'emailFormat'   => 'html', 
                 'viewVars'      => [
+                    'name'      => 'User',
                     'version'   => '123',
                     'foo'       => 'bar',
                     ],
@@ -59,5 +64,5 @@ return [
             ], # end of SPECIFIC
         ] # end of EmailQueue configs
 
-        
+
     ];

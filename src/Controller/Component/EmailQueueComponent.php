@@ -2,27 +2,26 @@
 
 namespace EmailQueue\Controller\Component;
 
-use Cake\ORM\TableRegistry;
-use Cake\Network\Email\Email;
 use Cake\Core\Configure;
 use Cake\Controller\Component;
+use Cake\Network\Email\Email;
+use Cake\ORM\TableRegistry;
+use Cake\Utility\Hash;
 
 class EmailQueueComponent extends Component{
     
     /**
      * Queues and email for delivery by storing it in the 
      * @param string $type   email type as defined in the SPECIFIC configuration array
-     * @param string $to     email address of recipient
+     * @param string $to_addr     email address of recipient
      * @param array $viewVars array of viewVars expected by the email $type's template (as specified in configuration file)
      * 
      * @return void
      */
-    public function add($type, $to, $viewVars){
-        $viewVars = json_encode($viewVars);
-
-        $this->EmailQueue = TableRegistry::get('Emailqueue');
-        $email = $this->EmailQueue->newEntity(compact('type', 'to', 'viewVars'));
-        $this->EmailQueue->save($email);
+    public function add($type, $to_addr, $viewVars){
+        $this->EmailQueue = TableRegistry::get('EmailQueue.EmailQueues');
+        $email = $this->EmailQueue->newEntity(compact('type', 'to_addr', 'viewVars'));
+        return $this->EmailQueue->save($email);
     }
 
     /**
@@ -35,13 +34,14 @@ class EmailQueueComponent extends Component{
      * 
      * @return void
      */
-    public function cron_emails(){
-        $this->EmailQueue = TableRegistry::get('Emailqueue');
+    public function process(){
+        $result = [];
+
+        $this->EmailQueue = TableRegistry::get('EmailQueue.EmailQueues');
         
         # find all the emails we need to send
         $emails = $this->EmailQueue
-                            ->find()
-                            ->where(["Emailqueues.status <>" => "sent"])
+                            ->find('pending')
                             ->all();
 
         foreach ($emails as $email):
@@ -50,31 +50,29 @@ class EmailQueueComponent extends Component{
             $master = Configure::read('EmailQueue.master');
 
             # get the specific details for the email.type
-            $email_specific = Configure::read('EmailQueue.specific.'.$email->type);
+            $specific = Configure::read('EmailQueue.specific.'.$email->type);
             
             # get the default email settings            
             $default = Configure::read('EmailQueue.default');
 
             # if in `testingmodeOverride` then load the override settings, otherwise just use a blank array (will have no effect)
             $override = ($master['testingmodeOverride']) ? Configure::read('EmailQueue.override') : [];
-
-            # decode the viewVars and cc arrays
-            $email->viewVars = json_decode($email->viewVars, true); /* DATABASE viewVars */
-            $email->cc = json_decode($email->cc, true); /* DATABASE cc */
          
             # merge all the configs into one final complete array
             $config = Hash::merge($default, $specific, $email->toArray(), $override);
 
             # build and send the email
             $e = new Email('default');
-            $e->template($config['template'], $config['layout'])
+            $result[] = $e->template($config['template'], $config['layout'])
                 ->emailFormat($config['emailFormat'])
                 ->viewVars($config['viewVars'])
                 ->from($config['from'])
-                ->to($config['to'])
-                ->cc($config['cc'])
+                ->to($config['to_addr'])
+                ->cc($config['cc_addr'])
                 ->subject($config['subject'])
                 ->send();
+
+            // $email->viewVars = json_encode($email->viewVars);
 
             # if we want to remove the email after it's sent, do so
             if ($master['deleteAfterSend']):
@@ -87,5 +85,7 @@ class EmailQueueComponent extends Component{
                 $this->EmailQueue->save($email);
             endif;
         endforeach;
+
+        return $result;
     }
 }
