@@ -23,8 +23,6 @@ CREATE TABLE IF NOT EXISTS `email_queues` (
 #### loading the plugin in your app
 Add the source code in this project into `src/Plugins/EmailQueue`
 
-If you are unable to get composer autoloading to work, uncomment the `'autoload' => true` line in your `bootstrap.php` `Plugin::load(..)` command (see previous)
-
 Then configure your App to actually load this plugin
 
 ```php
@@ -53,6 +51,7 @@ Then you need to issue the following command on the commandline
 ```
 	php composer.phar dumpautoload
 ```
+If you are unable to get composer autoloading to work, uncomment the `'autoload' => true` line in your `bootstrap.php` `Plugin::load(..)` command (see loading section)
 
 ### Using the EmailQueue
 Add the EmailQueue component to your controller
@@ -66,20 +65,17 @@ Add the EmailQueue component to your controller
 		# load the EmailQueue's EmailQueueComponent
 		$this->loadComponent('EmailQueue.EmailQueue');
 	}
-```
 
-Next, to actually queue an email
 
-```php
+// Next, to actually queue an email
+
+
 	# in your controller function
 	public function someRandomFunction(){
+		
 		# ...
-        $data = [
-            'email_template' => 'invoice', // type of email (see config file)
-            'to_mail' => 'ruchir.kakkad@gmail.com', 
-            'cc_mail' => '["ruchir.kakkad@gmail.com","chintanggor@gmail.com"]', 
-            'parametrs' => '{ "order_no":"007", "product_name" : "mobile", "qty" : "10", "total" : "$100" }' //viewVars should be in this json format only..
-        ];
+        $this->EmailQueue->add('demo', 'test@user.com', ['name'=>'Test User']);
+        
 	}
 ```
 
