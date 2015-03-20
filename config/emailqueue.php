@@ -7,7 +7,9 @@ return [
         'master' => [
             'deleteAfterSend' => FALSE, // TRUE- to delete entry from database, FALSE- update entry in database
             'testingmodeOverride' => TRUE // TRUE- overrides the settings to $config['override'], FALSE- default settings
-            ],
+            ], # end of MASTER
+
+
         /**
          * OVERRIDE settings
          * Priority: HIGHEST (OVERRIDE)
@@ -17,7 +19,9 @@ return [
         'override' => [
             'from' => 'override_sender@gmail.com',
             'to' => 'testing@email.com',
-            ],
+            ], # end of OVERRIDE
+
+
         /**
          * DEFAULT settings
          * Priority: LOWEST
@@ -27,7 +31,9 @@ return [
         'default' => [
             'from' => 'sender@gmail.com',
             'emailFormat' => 'both',
-            ],
+            ], # end of DEFAULT
+
+
         /**
          * This is an array of SPECIFIC settings for each email TYPE
          * format is
@@ -40,27 +46,18 @@ return [
          *     }
          */
         'specific' => [
-            'invoice' => [                # { type : invoice }
-                'subject' => 'Thanks for the Order', //email subject
-                'template' => 'invoice',  
-                'emailFormat' => 'html', 
-                'layout' => 'default', 
-                'viewVars' => [
-                    'order_no' => '111222333',
-                    'product_name' => 'Demo Product',
-                    'qty' => '0',
-                    'total' => '$0.00'
-                ] //viewVars - parameters to pass in email template file
-            ],
-            'password-reset' => [
-                'subject' => 'Reset your password', //email subject
-                'template' => 'password_reset',  //template view file name
-                'emailFormat' => 'html', //both or html or text
-                'layout' => 'default', // layout file name
-                'viewVars' => [ //viewVars - parameters to pass in email template file
-                    'email_address' => 'your email'
-                    ]  
-                ],
-            ],
-        ],
+            'test' => [                 
+                'subject'       => 'This is just a test!', 
+                'template'      => 'test',  
+                'layout'        => 'default', 
+                'emailFormat'   => 'html', 
+                'viewVars'      => [
+                    'version'   => '123',
+                    'foo'       => 'bar',
+                    ],
+                ], # end of type `test`
+            ], # end of SPECIFIC
+        ] # end of EmailQueue configs
+
+        
     ];

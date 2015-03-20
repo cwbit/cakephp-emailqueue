@@ -9,12 +9,13 @@ use Cake\Controller\Component;
 
 class EmailQueueComponent extends Component{
     
-
     /**
      * Queues and email for delivery by storing it in the 
      * @param string $type   email type as defined in the SPECIFIC configuration array
      * @param string $to     email address of recipient
      * @param array $viewVars array of viewVars expected by the email $type's template (as specified in configuration file)
+     * 
+     * @return void
      */
     public function add($type, $to, $viewVars){
         $viewVars = json_encode($viewVars);
@@ -24,15 +25,16 @@ class EmailQueueComponent extends Component{
         $this->EmailQueue->save($email);
     }
 
-
-    // public function add_email_entry($data){
-    //     $this->EmailQueue = TableRegistry::get('Emailqueue');
-    //     $this->EmailQueue_data = $this->EmailQueue->newEntity();
-    //     $this->EmailQueue_data = $this->EmailQueue->patchEntity($this->EmailQueue_data, $data);
-    //     $this->EmailQueue->save($this->EmailQueue_data);
-
-    // }
-    
+    /**
+     * Looks through the database and sends all the emails that need to be sent
+     * 
+     * Emails are built by combining all the configuration settings from the plugin config file and the settings in the email table itself
+     * See the hash::merge line for the order in which the configuration settings are implemented
+     * 
+     * Once sent, emails will either be removed or marked 'sent' based on the master configuration setting `deleteAfterSend`
+     * 
+     * @return void
+     */
     public function cron_emails(){
         $this->EmailQueue = TableRegistry::get('Emailqueue');
         
@@ -43,44 +45,25 @@ class EmailQueueComponent extends Component{
                             ->all();
 
         foreach ($emails as $email):
-            $email_specific = Configure::read('EmailQueue.specific');
-            $master = Configure::read('EmailQueue.master');
-            $default = Configure::read('EmailQueue.default');
-            $override = Configure::read('EmailQueue.override');
-            // $subject = $email_specific[$email->type]['subject'];
-            // $template = $email_specific[$email->type]['template'];
-            // $emailFormate = $email_specific[$email->type]['emailFormate'];
-            // $layout = (isset($email_specific[$email->type]['layout'])) ? $email_specific[$email->type]['layout'] : 'default';
-            // $viewVars = $email_specific[$email->type]['viewVars'];
 
+            # get the master configuration details for the plugin itself
+            $master = Configure::read('EmailQueue.master');
+
+            # get the specific details for the email.type
+            $email_specific = Configure::read('EmailQueue.specific.'.$email->type);
+            
+            # get the default email settings            
+            $default = Configure::read('EmailQueue.default');
+
+            # if in `testingmodeOverride` then load the override settings, otherwise just use a blank array (will have no effect)
+            $override = ($master['testingmodeOverride']) ? Configure::read('EmailQueue.override') : [];
+
+            # decode the viewVars and cc arrays
             $email->viewVars = json_decode($email->viewVars, true); /* DATABASE viewVars */
             $email->cc = json_decode($email->cc, true); /* DATABASE cc */
          
+            # merge all the configs into one final complete array
             $config = Hash::merge($default, $specific, $email->toArray(), $override);
-
-            // foreach ($viewVars as $key => $emailue)
-            // {
-            //     if (isset($database_viewVars[$key]))
-            //     {
-            //         $viewVars[$key] = $database_viewVars[$key];
-            //     }
-            //     else
-            //     {
-            //         $viewVars[$key] = $emailue;
-            //     }
-            // }
-
-            // if ($master['testingmodeOverride'] == true)
-            // {
-            //     $to = $overriede['to'];
-            //     $from = $overriede['from'];
-            // }
-            // else
-            // {
-            //     $to = $email->to;
-            //     $from = $default['from'];
-            // }
-            // $cc = json_decode($email->cc,true);
 
             # build and send the email
             $e = new Email('default');
@@ -93,20 +76,15 @@ class EmailQueueComponent extends Component{
                 ->subject($config['subject'])
                 ->send();
 
+            # if we want to remove the email after it's sent, do so
             if ($master['deleteAfterSend']):
-                // $this->EmailQueue = TableRegistry::get('Emailqueue');
-                // $this->EmailQueue_id = $this->EmailQueue->get($email['id']);
                 $this->EmailQueue->delete($email);
-            else:
-                // $this->EmailQueue = TableRegistry::get('Emailqueue');
-                // $this->EmailQueue_data = $this->EmailQueue->get($email['id']);
 
+            # otherwise, just mark it sent and leave it there
+            else:
                 $email->status = 'sent';
                 $email->sent_on = date('Y-m-d H:i:s');
-
-                // $this->EmailQueue_data = $this->EmailQueue->patchEntity($this->EmailQueue_data, array());
                 $this->EmailQueue->save($email);
-
             endif;
         endforeach;
     }
