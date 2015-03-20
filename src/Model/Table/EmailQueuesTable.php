@@ -1,0 +1,65 @@
+<?
+
+namespace EmailQueue\Model\Table;
+
+use Cake\Database\Schema\Table as Schema;
+use Cake\ORM\Table;
+use Cake\ORM\Query;
+use Cake\Validation\Validator;
+use Cake\ORM\Behavior\TimestampBehavior;
+
+class EmailQueuesTable extends Table{
+
+	/**
+	 * Initialize the table
+	 * @param  array  $options 
+	 * @return void
+	 */
+	public function initialize(array $options){
+		parent::initialize($options);
+
+		# load the timestamp behavior so our created/modified fields are populated
+		$this->addBehavior('Timestamp');
+	}
+
+	/**
+	 * Tell CakePHP to modify the data structure of the entity data types
+	 * @param  Schema $schema this table's schema
+	 * @return Schema the adjusted schema definition
+	 */
+	protected function _initializeSchema(Schema $schema) {
+        $schema->columnType('viewVars', 'json');
+        return $schema;
+    }
+	
+	/**
+	 * Add the default table validation rules
+	 * @param  Validator $validator [description]
+	 * @return Validator 
+	 */
+	public function validationDefault( Validator $validator ) {
+		$validator
+			->requirePresence('type', 'create')
+			->notEmpty('type')
+			->requirePresence('to_addr', 'create')
+			->notEmpty('to_addr')
+			->requirePresence('viewVars', 'create')
+			->notEmpty('viewVars');
+
+		return $validator;
+	}
+
+	/**
+	 * Filter our Query object to only show emails that are pending
+	 * 
+	 * This will be exposed as EmailQueues->find('pending')
+	 * 
+	 * @param  Query  $query   Cake Query object
+	 * @param  array  $options array of query options (not currently used by this finder)
+	 * @return Query
+	 */
+	public function findPending(Query $query, array $options){
+		return $query->where(['EmailQueues.status' => 'pending']);
+	}
+
+}
