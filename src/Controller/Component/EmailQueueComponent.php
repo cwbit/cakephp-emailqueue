@@ -9,13 +9,29 @@ use Cake\Controller\Component;
 
 class EmailQueueComponent extends Component{
     
-    public function add_email_entry($data){
-        $Emailqueue = TableRegistry::get('Emailqueue');
-        $emailqueue_data = $Emailqueue->newEntity();
-        $emailqueue_data = $Emailqueue->patchEntity($emailqueue_data, $data);
-        $Emailqueue->save($emailqueue_data);
 
+    /**
+     * Queues and email for delivery by storing it in the 
+     * @param string $type   email type as defined in the SPECIFIC configuration array
+     * @param string $to     email address of recipient
+     * @param array $viewVars array of viewVars expected by the email $type's template (as specified in configuration file)
+     */
+    public function add($type, $to, $viewVars){
+        $viewVars = json_encode($viewVars);
+
+        $this->EmailQueue = TableRegistry::get('Emailqueue');
+        $email = $this->EmailQueue->newEntity(compact('type', 'to', 'viewVars'));
+        $this->EmailQueue->save($email);
     }
+
+
+    // public function add_email_entry($data){
+    //     $this->EmailQueue = TableRegistry::get('Emailqueue');
+    //     $this->EmailQueue_data = $this->EmailQueue->newEntity();
+    //     $this->EmailQueue_data = $this->EmailQueue->patchEntity($this->EmailQueue_data, $data);
+    //     $this->EmailQueue->save($this->EmailQueue_data);
+
+    // }
     
     public function cron_emails(){
         $Emailqueue = TableRegistry::get('Emailqueue');
