@@ -1,10 +1,10 @@
-# Email Queue Component in Cakephp 3.0 #
+# CakePHP 3 - EmailQueue Plugin 
 
-### Database Installation ##
+### Database Installation
 Run the following script to set up the database for the plugin
 
 ```sql
-CREATE TABLE IF NOT EXISTS `emailqueue` (
+CREATE TABLE IF NOT EXISTS `email_queues` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `type` varchar(255) NOT NULL,
   `to` varchar(1020) NOT NULL,
@@ -18,19 +18,43 @@ CREATE TABLE IF NOT EXISTS `emailqueue` (
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 ;
 ```
 
-### Plugin Installation ###
+### Plugin Installation
+
+#### loading the plugin in your app
 Add the source code in this project into `src/Plugins/EmailQueue`
+
+If you are unable to get composer autoloading to work, uncomment the `'autoload' => true` line in your `bootstrap.php` `Plugin::load(..)` command (see previous)
 
 Then configure your App to actually load this plugin
 
 ```php
-	# ../config/bootstrap.php
-	Plugin::load('EmailQueue', [
-		'bootstrap' => true, 		# let the plugin load its boostrap file(s)
-		]);
+	# in ../config/bootstrap.php
+Plugin::load('EmailQueue', [
+    'bootstrap' => true,        # let the plugin load its boostrap file
+    'routes' => true,           # load the plugin routes file
+    'ignoreMissing' => true,    # ignore missing routes or bootstrap file(s)
+    'autoload' => true,      # uncomment if you can't use composer to set the namespace/class location
+    ]);
+```
+#### setting up the namespace / autoloader
+Tell the autoloader where to find your namespace in your `composer.json` file
+
+```json
+	(..)
+    "autoload": {
+        "psr-4": {
+           (..)
+            "EmailQueue\\": "./plugins/EmailQueue/src"
+        }
+    },
+    (..)
+```
+Then you need to issue the following command on the commandline
+```
+	php composer.phar dumpautoload
 ```
 
-### Using the EmailQueue ###
+### Using the EmailQueue
 Add the EmailQueue component to your controller
 
 ```php
@@ -59,8 +83,9 @@ Next, to actually queue an email
 	}
 ```
 
-### Now check the DemoController.php file for example to use in any controller in application ###
+### Demo Controller
 
-* Insert emailqueue entry in database :- Check function add_email_entry()
+**warning: the demo controller is only available while in { debug : true }**
 
-* Fire emails from database:- Check function cron_emails()
+Load the following url (while in debug mode) `../email_queue/demo/test`
+or view the file `src/Controller/DemoController.php`
