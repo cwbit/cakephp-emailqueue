@@ -3,13 +3,29 @@ namespace EmailQueue\Controller;
 
 use EmailQueue\Controller\EmailQueueAppController;
 
-class DemoController extends EmailQueueAppController
-{
+class DemoController extends EmailQueueAppController{
+
+
     public function cron_emails() {
         $this->loadComponent('EmailQueue.EmailQueue');
         echo $this->EmailQueue->cron_emails();
         die;
     }
+
+    /**
+     * Sample function showing how to add and use the EmailQueue component
+     * @return [type] [description]
+     */
+    public function test(){
+        #load the component - can be done in self::initialize, too
+        $this->loadComponent('EmailQueue.EmailQueue');
+
+        # queue an email of type 'test' to be sent to a random email with some view variables used by the 'test' template 
+        $this->EmailQueue->add($type = 'test', $to = 'test@example.com', ['name'=>'Warren T Wicket'] );
+
+        die;
+    }
+
 
     public function add_email_entry() {
         /*
