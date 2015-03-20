@@ -6,10 +6,10 @@ Run the following script to set up the database for the plugin
 ```sql
 CREATE TABLE IF NOT EXISTS `emailqueue` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `email_template` varchar(255) NOT NULL,
-  `to_mail` varchar(1020) NOT NULL,
-  `cc_mail` varchar(1020) NOT NULL,
-  `parametrs` varchar(1020) NOT NULL,
+  `type` varchar(255) NOT NULL,
+  `to` varchar(1020) NOT NULL,
+  `cc` TEXT NOT NULL,
+  `viewVars` varchar(1020) NOT NULL,
   `status` varchar(255) NOT NULL DEFAULT 'pending',
   `sent_on` timestamp NULL DEFAULT NULL,
   `created` timestamp NULL DEFAULT NULL,
