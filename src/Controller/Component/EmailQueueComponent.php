@@ -34,32 +34,36 @@ class EmailQueueComponent extends Component{
     // }
     
     public function cron_emails(){
-        $Emailqueue = TableRegistry::get('Emailqueue');
-        $emails = $Emailqueue->find('all', array("conditions" => array("status <>" => "sent"))); // Call the query on the model
+        $this->EmailQueue = TableRegistry::get('Emailqueue');
+        
+        # find all the emails we need to send
+        $emails = $this->EmailQueue
+                            ->find()
+                            ->where(["Emailqueues.status <>" => "sent"])
+                            ->all();
 
-        foreach ($emails as $val)
-        {
+        foreach ($emails as $email):
             $email_specific = Configure::read('EmailQueue.specific');
             $master = Configure::read('EmailQueue.master');
             $default = Configure::read('EmailQueue.default');
             $overriede = Configure::read('EmailQueue.overriede');
-            $subject = $email_specific[$val['email_template']]['subject'];
-            $template = $email_specific[$val['email_template']]['template'];
-            $emailFormate = $email_specific[$val['email_template']]['emailFormate'];
-            $layout = @$email_specific[$val['email_template']]['layout'];
-            $viewVars = $email_specific[$val['email_template']]['viewVars'];
+            $subject = $email_specific[$email->type]['subject'];
+            $template = $email_specific[$email->type]['template'];
+            $emailFormate = $email_specific[$email->type]['emailFormate'];
+            $layout = (isset($email_specific[$email->type]['layout'])) ? $email_specific[$email->type]['layout'] : 'default';
+            $viewVars = $email_specific[$email->type]['viewVars'];
 
-            $database_parameters = json_decode($val['parametrs'], true); /* DATABASE Parameters */
-            $parameters = [];
-            foreach ($viewVars as $key => $value)
+            $database_viewVars = json_decode($email->viewVars, true); /* DATABASE viewVars */
+            $viewVars = [];
+            foreach ($viewVars as $key => $emailue)
             {
-                if (isset($database_parameters[$key]))
+                if (isset($database_viewVars[$key]))
                 {
-                    $parameters[$key] = $database_parameters[$key];
+                    $viewVars[$key] = $database_viewVars[$key];
                 }
                 else
                 {
-                    $parameters[$key] = $value;
+                    $viewVars[$key] = $emailue;
                 }
             }
 
@@ -70,38 +74,37 @@ class EmailQueueComponent extends Component{
             }
             else
             {
-                $to = $val['to_mail'];
+                $to = $email->to;
                 $from = $default['from'];
             }
-            $cc = json_decode($val['cc_mail'],true);
+            $cc = json_decode($email->cc,true);
 
-            $email = new Email('default');
-            $email->template($template, $layout)
+            # build and send the email
+            $e = new Email('default');
+            $e->template($template, $layout)
                 ->emailFormat($emailFormate)
-                ->viewVars($parameters)
+                ->viewVars($viewVars)
                 ->from($from)
                 ->to($to)
                 ->cc($cc)
                 ->subject($subject)
                 ->send();
 
-            if ($master['deleteAfterSend'])
-            {
-                $Emailqueue = TableRegistry::get('Emailqueue');
-                $emailqueue_id = $Emailqueue->get($val['id']);
-                $Emailqueue->delete($emailqueue_id);
-            }
-            else
-            {
-                $Emailqueue = TableRegistry::get('Emailqueue');
-                $emailqueue_data = $Emailqueue->get($val['id']);
+            if ($master['deleteAfterSend']):
+                // $this->EmailQueue = TableRegistry::get('Emailqueue');
+                // $this->EmailQueue_id = $this->EmailQueue->get($email['id']);
+                $this->EmailQueue->delete($email);
+            else:
+                // $this->EmailQueue = TableRegistry::get('Emailqueue');
+                // $this->EmailQueue_data = $this->EmailQueue->get($email['id']);
 
-                $emailqueue_data['status'] = 'sent';
-                $emailqueue_data['sent_on'] = date('Y-m-d H:i:s');
+                $email->status = 'sent';
+                $email->sent_on = date('Y-m-d H:i:s');
 
-                $emailqueue_data = $Emailqueue->patchEntity($emailqueue_data, array());
-                $Emailqueue->save($emailqueue_data);
-            }
-        }
+                // $this->EmailQueue_data = $this->EmailQueue->patchEntity($this->EmailQueue_data, array());
+                $this->EmailQueue->save($email);
+
+            endif;
+        endforeach;
     }
 }
