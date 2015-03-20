@@ -6,7 +6,7 @@ return [
          */
         'master' => [
             'deleteAfterSend' => FALSE, // TRUE- to delete entry from database, FALSE- update entry in database
-            'testingmodeOverride' => FALSE // TRUE- overrides the settings to $config['override'], FALSE- default settings
+            'testingmodeOverride' => TRUE // TRUE- overrides the settings to $config['override'], FALSE- default settings
             ],
         /**
          * OVERRIDE settings
@@ -16,7 +16,7 @@ return [
          */
         'override' => [
             'from' => 'override_sender@gmail.com',
-            'to' => 'testing@email.com'
+            'to' => 'testing@email.com',
             ],
         /**
          * DEFAULT settings
@@ -26,7 +26,7 @@ return [
          */
         'default' => [
             'from' => 'sender@gmail.com',
-            'to' => ''
+            'emailFormat' => 'both',
             ],
         /**
          * This is an array of SPECIFIC settings for each email TYPE
@@ -43,7 +43,7 @@ return [
             'invoice' => [                # { type : invoice }
                 'subject' => 'Thanks for the Order', //email subject
                 'template' => 'invoice',  
-                'emailFormate' => 'html', 
+                'emailFormat' => 'html', 
                 'layout' => 'default', 
                 'viewVars' => [
                     'order_no' => '111222333',
@@ -55,7 +55,7 @@ return [
             'password-reset' => [
                 'subject' => 'Reset your password', //email subject
                 'template' => 'password_reset',  //template view file name
-                'emailFormate' => 'html', //both or html or text
+                'emailFormat' => 'html', //both or html or text
                 'layout' => 'default', // layout file name
                 'viewVars' => [ //viewVars - parameters to pass in email template file
                     'email_address' => 'your email'

@@ -46,48 +46,51 @@ class EmailQueueComponent extends Component{
             $email_specific = Configure::read('EmailQueue.specific');
             $master = Configure::read('EmailQueue.master');
             $default = Configure::read('EmailQueue.default');
-            $overriede = Configure::read('EmailQueue.overriede');
-            $subject = $email_specific[$email->type]['subject'];
-            $template = $email_specific[$email->type]['template'];
-            $emailFormate = $email_specific[$email->type]['emailFormate'];
-            $layout = (isset($email_specific[$email->type]['layout'])) ? $email_specific[$email->type]['layout'] : 'default';
-            $viewVars = $email_specific[$email->type]['viewVars'];
+            $override = Configure::read('EmailQueue.override');
+            // $subject = $email_specific[$email->type]['subject'];
+            // $template = $email_specific[$email->type]['template'];
+            // $emailFormate = $email_specific[$email->type]['emailFormate'];
+            // $layout = (isset($email_specific[$email->type]['layout'])) ? $email_specific[$email->type]['layout'] : 'default';
+            // $viewVars = $email_specific[$email->type]['viewVars'];
 
-            $database_viewVars = json_decode($email->viewVars, true); /* DATABASE viewVars */
-            $viewVars = [];
-            foreach ($viewVars as $key => $emailue)
-            {
-                if (isset($database_viewVars[$key]))
-                {
-                    $viewVars[$key] = $database_viewVars[$key];
-                }
-                else
-                {
-                    $viewVars[$key] = $emailue;
-                }
-            }
+            $email->viewVars = json_decode($email->viewVars, true); /* DATABASE viewVars */
+            $email->cc = json_decode($email->cc, true); /* DATABASE cc */
+         
+            $config = Hash::merge($default, $specific, $email->toArray(), $override);
 
-            if ($master['testingmodeOverride'] == true)
-            {
-                $to = $overriede['to'];
-                $from = $overriede['from'];
-            }
-            else
-            {
-                $to = $email->to;
-                $from = $default['from'];
-            }
-            $cc = json_decode($email->cc,true);
+            // foreach ($viewVars as $key => $emailue)
+            // {
+            //     if (isset($database_viewVars[$key]))
+            //     {
+            //         $viewVars[$key] = $database_viewVars[$key];
+            //     }
+            //     else
+            //     {
+            //         $viewVars[$key] = $emailue;
+            //     }
+            // }
+
+            // if ($master['testingmodeOverride'] == true)
+            // {
+            //     $to = $overriede['to'];
+            //     $from = $overriede['from'];
+            // }
+            // else
+            // {
+            //     $to = $email->to;
+            //     $from = $default['from'];
+            // }
+            // $cc = json_decode($email->cc,true);
 
             # build and send the email
             $e = new Email('default');
-            $e->template($template, $layout)
-                ->emailFormat($emailFormate)
-                ->viewVars($viewVars)
-                ->from($from)
-                ->to($to)
-                ->cc($cc)
-                ->subject($subject)
+            $e->template($config['template'], $config['layout'])
+                ->emailFormat($config['emailFormat'])
+                ->viewVars($config['viewVars'])
+                ->from($config['from'])
+                ->to($config['to'])
+                ->cc($config['cc'])
+                ->subject($config['subject'])
                 ->send();
 
             if ($master['deleteAfterSend']):
