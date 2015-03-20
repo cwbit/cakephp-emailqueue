@@ -18,14 +18,46 @@ CREATE TABLE IF NOT EXISTS `emailqueue` (
 ) ENGINE=InnoDB  DEFAULT CHARSET=latin1 ;
 ```
 
-### Steps to Configure a component: ###
+### Plugin Installation ###
+Add the source code in this project into `src/Plugins/EmailQueue`
 
-* Put emailqueue_config.php file in config directory
-* Write Configure::load(‘emailqueue_config’); in config/bootstrap.php
-* Put EmailQueueComponent.php in src/Controller/Component directory
-* Import the emailqueue.sql file in your database
+Then configure your App to actually load this plugin
 
-You have now successfully configured the component.
+```php
+	# ../config/bootstrap.php
+	Plugin::load('EmailQueue', [
+		'bootstrap' => true, 		# let the plugin load its boostrap file(s)
+		]);
+```
+
+### Using the EmailQueue ###
+Add the EmailQueue component to your controller
+
+```php
+	# ../src/Controller/DemoController.php
+	
+	public function initialize(){
+		parent::initialize();
+		
+		# load the EmailQueue's EmailQueueComponent
+		$this->loadComponent('EmailQueue.EmailQueue');
+	}
+```
+
+Next, to actually queue an email
+
+```php
+	# in your controller function
+	public function someRandomFunction(){
+		# ...
+        $data = [
+            'email_template' => 'invoice', // type of email (see config file)
+            'to_mail' => 'ruchir.kakkad@gmail.com', 
+            'cc_mail' => '["ruchir.kakkad@gmail.com","chintanggor@gmail.com"]', 
+            'parametrs' => '{ "order_no":"007", "product_name" : "mobile", "qty" : "10", "total" : "$100" }' //viewVars should be in this json format only..
+        ];
+	}
+```
 
 ### Now check the DemoController.php file for example to use in any controller in application ###
 
