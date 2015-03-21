@@ -72,8 +72,6 @@ class EmailQueueComponent extends Component{
                 ->subject($config['subject'])
                 ->send();
 
-            // $email->viewVars = json_encode($email->viewVars);
-
             # if we want to remove the email after it's sent, do so
             if ($master['deleteAfterSend']):
                 $this->EmailQueue->delete($email);
