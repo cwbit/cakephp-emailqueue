@@ -46,20 +46,8 @@ class EmailQueueComponent extends Component{
 
         foreach ($emails as $email):
 
-            # get the master configuration details for the plugin itself
-            $master = Configure::read('EmailQueue.master');
-
-            # get the specific details for the email.type
-            $specific = Configure::read('EmailQueue.specific.'.$email->type);
-            
-            # get the default email settings            
-            $default = Configure::read('EmailQueue.default');
-
-            # if in `testingmodeOverride` then load the override settings, otherwise just use a blank array (will have no effect)
-            $override = ($master['testingmodeOverride']) ? Configure::read('EmailQueue.override') : [];
-         
-            # merge all the configs into one final complete array
-            $config = Hash::merge($default, $specific, $email->toArray(), $override);
+            # get the config settings for this email
+            $config = $this->_getConfig($email);
 
             # build and send the email
             $e = new Email('default');
@@ -85,5 +73,28 @@ class EmailQueueComponent extends Component{
         endforeach;
 
         return $result;
+    }
+
+    /**
+     * Builds a complete set of configuration settings by reading in several config arrays and merging them according to priority
+     * 
+     * @param Entity $email email entity
+     * @return array complete configuration array
+     */
+    protected function _getConfig($email){
+        # get the master configuration details for the plugin itself
+        $master = Configure::read('EmailQueue.master');
+
+        # get the specific details for the email.type
+        $specific = Configure::read('EmailQueue.specific.'.$email->type);
+        
+        # get the default email settings            
+        $default = Configure::read('EmailQueue.default');
+
+        # if in `testingModeOverride` then load the override settings, otherwise just use a blank array (will have no effect)
+        $override = ($master['testingModeOverride']) ? Configure::read('EmailQueue.override') : [];
+     
+        # merge all the configs into one final complete array
+        return Hash::merge($default, $specific, $email->toArray(), $override);
     }
 }
