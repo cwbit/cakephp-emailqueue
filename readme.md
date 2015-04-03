@@ -21,9 +21,9 @@ Run the following script to set up the database for the plugin
 CREATE TABLE IF NOT EXISTS `email_queues` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `type` varchar(255) NOT NULL,
-  `to` varchar(1020) NOT NULL,
-  `cc` TEXT NOT NULL,
-  `viewVars` varchar(1020) NOT NULL,
+  `to_addr` varchar(1020) NOT NULL,
+  `cc_addr` TEXT NOT NULL,
+  `viewVars` TEXT NOT NULL,
   `status` varchar(255) NOT NULL DEFAULT 'pending',
   `sent_on` timestamp NULL DEFAULT NULL,
   `created` timestamp NULL DEFAULT NULL,
