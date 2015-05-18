@@ -133,6 +133,6 @@ class EmailQueueComponent extends Component{
         $override = ($master['testingModeOverride']) ? Configure::read('EmailQueue.override') : [];
      
         # merge all the configs into one final complete array
-        return Hash::merge($default, $specific, $email->toArray(), $override);
+        return Hash::merge($default, $specific, $email->toArray(), $override, $master);
     }
 }
