@@ -52,7 +52,7 @@ return [
          */
         'override' => [
             'from'              => 'override_sender@email.com',
-            'to_addr'           => 'override_to@email.com',
+            'to'                => 'override_to@email.com',
             ], # end of OVERRIDE
 
 
@@ -63,9 +63,9 @@ return [
          * Things like the default 'from' setting can be set in here and will apply to all emails unless replaced by values from the DATABASE, a SPECIFIC template setting, or the OVERRIDE
          */
         'default' => [
-            // 'cc_addr'           => ['default_cc@email.com'],    
+            'cc'                => ['default_cc@email.com'],    
             'emailFormat'       => 'both',                      
-            // 'from'              => 'default_sender@email.com',
+            'from'              => 'default_sender@email.com',
             'layout'            => 'EmailQueue.default',
             ], # end of DEFAULT
 
