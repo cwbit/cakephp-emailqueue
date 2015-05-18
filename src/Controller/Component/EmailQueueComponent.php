@@ -7,6 +7,7 @@ use Cake\Controller\Component;
 use Cake\Network\Email\Email;
 use Cake\ORM\TableRegistry;
 use Cake\Utility\Hash;
+use Cake\Log\Log;
 
 class EmailQueueComponent extends Component{
 
@@ -78,6 +79,7 @@ class EmailQueueComponent extends Component{
 
         # build and send each email
         foreach ($emails as $email):
+            try {
                 # get the config settings for this email
                 $config = $this->_getConfig($email);
 
@@ -101,6 +103,10 @@ class EmailQueueComponent extends Component{
                     $this->EmailQueue->save($email);
                 endif;
                 
+            } catch (Exception $e) {
+                Log::error($e->getMessage());
+                continue;
+            }
         endforeach;
 
         # return the results from each email
