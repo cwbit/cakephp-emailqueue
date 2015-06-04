@@ -34,7 +34,26 @@ CREATE TABLE IF NOT EXISTS `email_queues` (
 
 ### Plugin Installation
 
-#### loading the plugin in your app
+1. Using Composer
+2. Manually
+  3. Loading the plugin in your app 
+  4. Setting up the namespace / autoloader
+3. CakePHP Bootstrapping
+4. Configuring the Plugin
+
+  
+#### Composer Install
+
+This plugin is on Packagist which means it can be easily installed with Composer.
+
+```
+composer require cwbit/cakephp-emailqueue:~1
+```
+#### Manual Install
+
+You can also manually load this plugin in your App
+
+##### loading the plugin in your app
 Add the source code in this project into `src/Plugins/EmailQueue`
 
 Then configure your App to actually load this plugin
@@ -48,7 +67,8 @@ Plugin::load('EmailQueue', [
     'autoload' => true,      # uncomment if you can't use composer to set the namespace/class location
     ]);
 ```
-#### setting up the namespace / autoloader
+
+##### setting up the namespace / autoloader
 Tell the autoloader where to find your namespace in your `composer.json` file
 
 ```json
@@ -70,7 +90,7 @@ If you are unable to get composer autoloading to work, uncomment the `'autoload'
 ### Configuration
 This section may seem complicated but it's really not, trust me.
 
-**TLDR;** we dynamically build emails by combining a bunch of config arrays to get the settings for each email.
+***TLDR;*** **we dynamically build emails by combining a bunch of config settings that directly match up to the configurable settings in \Cake\Email\Email.**
 
 ##### Configuration Explanation
 The EmailQueue needs to be given some basic configuration before it can be used. The idea is to set up config settings for each of the different types of emails you're going to be sending - the `_getConfig($emailType)` function will merge all the configuration options into a complete set of information for the `Email` library
@@ -147,11 +167,10 @@ Add the EmailQueue component to your controller
 		# load the EmailQueue's EmailQueueComponent
 		$this->loadComponent('EmailQueue.EmailQueue');
 	}
+```
+And then to actually Queue an email, just specify the email **`type`**, who it's **`to`**, and any **`viewVars`** the Template (*set in the config `EmailQueue.specific.{$type}`*) will need when rendering itself.
 
-
-// Next, to actually queue an email
-
-
+```php
 	# in your controller function
 	public function someRandomFunction(){
 		
@@ -166,7 +185,7 @@ Currently the Queued emails are processed by running the `EmailQueueComponent::p
 
 To automatically process the email queue (via CRON) just expose the `process` method thru a controller (see `DemoController::cron_emails()` for an example) and call it via URL
 
-**TODO: this should a Cake Shell**
+**TODO: this should a use Cake Shell**
 
 ### Demo Controller
 

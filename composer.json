@@ -1,0 +1,18 @@
+{
+  "name": "cwbit/cakephp-emailqueue",
+  "description": "A configurable, queue-based plugin for queuing and sending Emails in CakePHP 3",
+  "type": "cakephp-plugin",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Chris Brescia",
+    }
+  ],
+  "minimum-stability": "dev",
+  "require": {
+    "composer/installers": "~1.0"
+  },
+  "extra": {
+    "installer-name": "EmailQueue"
+  }
+}
