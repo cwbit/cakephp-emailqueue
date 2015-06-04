@@ -20,12 +20,12 @@ Run the following script to set up the database for the plugin
 ```sql
 CREATE TABLE IF NOT EXISTS `email_queues` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
-  `type` varchar(255) NOT NULL,
-  `to_addr` varchar(1020) NOT NULL,
-  -- `cc_addr` TEXT NOT NULL, -- optional, generally you do a global CC in the config file
-  `viewVars` TEXT NOT NULL,
-  `status` varchar(255) NOT NULL DEFAULT 'pending',
-  `sent_on` timestamp NULL DEFAULT NULL,
+  `type` varchar(255) NOT NULL, -- TYPE of the email, e.g. order-confirm. This is used to get the set of configs EmailQueue.specific.{$type} see below
+  `to_addr` varchar(1020) NOT NULL, -- will be mapped to CakeEmail::to()
+  -- `cc_addr` TEXT NOT NULL, -- optional, generally you do a global CC in the config file. -- mapped to CakeEmail::cc()
+  `viewVars` TEXT NOT NULL, -- will be mapped to CakeEmail::viewVars()
+  `status` varchar(255) NOT NULL DEFAULT 'pending', -- by default only pending emails will be considered
+  `sent_on` timestamp NULL DEFAULT NULL, -- when the email was sent
   `created` timestamp NULL DEFAULT NULL,
   `modified` timestamp NULL DEFAULT NULL,
   PRIMARY KEY (`id`)
