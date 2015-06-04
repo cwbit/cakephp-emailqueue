@@ -21,8 +21,8 @@ Run the following script to set up the database for the plugin
 CREATE TABLE IF NOT EXISTS `email_queues` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `type` varchar(255) NOT NULL,
-  `to` varchar(1020) NOT NULL,
-  -- `cc` TEXT NOT NULL, -- optional, generally you do a global CC
+  `to_addr` varchar(1020) NOT NULL,
+  -- `cc_addr` TEXT NOT NULL, -- optional, generally you do a global CC in the config file
   `viewVars` TEXT NOT NULL,
   `status` varchar(255) NOT NULL DEFAULT 'pending',
   `sent_on` timestamp NULL DEFAULT NULL,
@@ -102,10 +102,10 @@ return [
             ], # end of MASTER
         'override' => [
             'from'              => 'override_sender@email.com',
-            'to'                => 'override_to@email.com',
+            'to_addr'           => 'override_to@email.com',
             ], # end of OVERRIDE
         'default' => [
-            'cc'                => ['default_cc@email.com'],    
+            'cc_addr'           => ['default_cc@email.com'],    
             'emailFormat'       => 'both',                      
             'from'              => 'default_sender@email.com',
             'layout'            => 'EmailQueue.default',

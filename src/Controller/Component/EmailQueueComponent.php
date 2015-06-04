@@ -41,6 +41,18 @@ class EmailQueueComponent extends Component{
         'log' => true,          #: Log level to log the email headers and message. true will use LOG_DEBUG. See also CakeLog::write()
         'helpers' => true,      #: Array of helpers used in the email template.
         ];
+
+    /**
+     * Used to re-map configuration keys into the parameters for \Network\Email\Email::profile(..)
+     * 
+     * E.g. we need to remap 'to_addr' (from the config) into 'to' (the Email class function) because `to` is a reserved word in MySQL so we can't use it as the database column
+     * @var array
+     */
+    private $_map = [
+        'to_addr' => 'to',      # change key 'to_addr' to 'to'
+        'cc_addr' => 'cc',      # change key 'cc_addr' to 'cc'
+        'bcc_addr' => 'bcc',    # change key 'bcc_addr' to 'bcc'
+        ];
     
     /**
      * Queues and email for delivery by storing it in the 
@@ -53,7 +65,8 @@ class EmailQueueComponent extends Component{
     public function add($type, $to_addr, $viewVars){
         $this->EmailQueue = TableRegistry::get('EmailQueue.EmailQueues');
         $email = $this->EmailQueue->newEntity(compact('type', 'to_addr', 'viewVars'));
-        return $this->EmailQueue->save($email);
+        $this->EmailQueue->save($email);
+        return $email;
     }
 
     /**
@@ -64,7 +77,7 @@ class EmailQueueComponent extends Component{
      * 
      * Once sent, emails will either be removed or marked 'sent' based on the master configuration setting `deleteAfterSend`
      * 
-     * @return void
+     * @return array of results from each email send
      */
     public function process(){
         $result = [];
@@ -131,8 +144,42 @@ class EmailQueueComponent extends Component{
 
         # if in `testingModeOverride` then load the override settings, otherwise just use a blank array (will have no effect)
         $override = ($master['testingModeOverride']) ? Configure::read('EmailQueue.override') : [];
-     
+
         # merge all the configs into one final complete array
-        return Hash::merge($default, $specific, $email->toArray(), $override, $master);
+        $config = Hash::merge($default, $specific, $email->toArray(), $override, $master);
+
+        return $this->_formatConfig($config);
+
+    }
+
+    /**
+     * Applies required format modifications to the config array
+     * @param  array $config configuration array
+     * @return array         formatted configuration array
+     */
+    private function _formatConfig($config){
+        # remap keys (if any)
+        $config = $this->_remapKeys($config);
+
+        return $config;
+    }
+
+    /**
+     * Re-maps the configuration keys based on $this::_map
+     * 
+     * This was added because the \Network\Email\Email::profile needs to set `to` which is a reserved word in MySQL. So we store it as `to_addr` in the database and re-map it as `to` before we try and use it
+     * @param  array $config configuration array
+     * @return array         formatted configuration array
+     */
+    private function _remapKeys($config){
+        # remap keys
+        foreach($this->_map as $key => $remap):
+            if(isset($config[$key])):
+                $config[$remap] = $config[$key];
+                unset($config[$key]);
+            endif;
+        endforeach;
+
+        return $config;
     }
 }
