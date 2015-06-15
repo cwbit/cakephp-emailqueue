@@ -29,8 +29,9 @@ It's not cool to bomb or hold up an order because you can't send an email confir
 This plugin is on Packagist which means it can be easily installed with Composer.
 
 ```
-composer require cwbit/cakephp-emailqueue:~1
+composer require cwbit/cakephp-emailqueue:dev-master
 ```
+
 #### Manual Install
 
 You can also manually load this plugin in your App
@@ -48,28 +49,9 @@ Plugin::load('EmailQueue', [
     'bootstrap' => true,        # let the plugin load its boostrap file
     'routes' => true,           # load the plugin routes file
     'ignoreMissing' => true,    # ignore missing routes or bootstrap file(s)
-    'autoload' => true,      # uncomment if you can't use composer to set the namespace/class location
+    'autoload' => true,      	# uncomment if you can't get composer to set the namespace/class location
     ]);
 ```
-
-##### setting up the namespace / autoloader
-Tell the autoloader where to find your namespace in your `composer.json` file
-
-```json
-	(..)
-    "autoload": {
-        "psr-4": {
-           (..)
-            "EmailQueue\\": "./plugins/EmailQueue/src"
-        }
-    },
-    (..)
-```
-Then you need to issue the following command on the commandline
-```
-	php composer.phar dumpautoload
-```
-If you are unable to get composer autoloading to work, uncomment the `'autoload' => true` line in your `bootstrap.php` `Plugin::load(..)` command (see loading section)
 
 ### Database Installation
 
@@ -78,7 +60,7 @@ Run the following migration command from inside your app directory to build the 
 ```bash
  cd /path/to/your/app/root
  bin/cake migrations migrate --plugin EmailQueue
- ```
+```
 
  You should now see a database table called `email_queues` and likely another called `email_queue_phinxlog` (used to store the current migration state, you can ignore this)
 
@@ -90,16 +72,31 @@ This section may seem complicated but it's really not, trust me.
 ##### Configuration Explanation
 The EmailQueue needs to be given some basic configuration before it can be used. The idea is to set up config settings for each of the different types of emails you're going to be sending - the `_getConfig($emailType)` function will merge all the configuration options into a complete set of information for the `Email` library
 
-* master
-  * settings for the component itself
-* default
-  * default settings applied to each email with lowest priority
-* override
-  * override settings applied to each email with HIGHEST priority iif `master.testingModeOverride = true`
-* specific.type
-  * settings applied to email based on the `email->type`
+The parameters used to send the actual email are built by combining the 5 different config arrays to
+
+```
+default <= specific <= database <= override <= master
+   ^											  ^
+  LOW											 HIGH
+PRIORITY  									   PRIORITY
+```
+
+
+* `master`
+  * settings for the plugin itself (no EMAIL-level settings)
+* `default`
+  * default settings applied to each email (with LOWEST priority)
+  * e.g. to apply a standard `reply-to` or `bcc`
+* `override`
+  * override settings applied to each email (with HIGHEST priority if `master.testingModeOverride = true`)
+  * e.g. to force all emails to send `to` while in dev
+* `specific.type`
+  * settings applied to email based on the `email->type` (with NORMAL priority)
   * keyed by `email->type`
-  * example: We can Queue an `order-confirmation` email in the database and have the `process()` determine what layout, to_addr, etc. we should use for an order-confirmation by looking in the `EmailQueue.specific.order-confirmation` array
+  * e.g. to specify which `template` your `order-confirmation` email should be using, or that your `password-reset` email should send with `emailFormat => 'text'` instead of `both`
+* `database`
+  * database-level configuration settings are actually retrieved from the email entity in the queue table
+  * e.g. the actual `to` address for your email, and the `orderId` to be used to load the order details  
 
 ##### Default Configuration
 Here is what the default configuration file might look like. `demo` in this example would be an email type that we support - it would load the `EmailQueue.test` view file, passing it `viewVars = ['name' => .., 'version' => .., 'foo' => ..]` and the email would be sent to `to_addr` from `from` and so on
@@ -157,7 +154,7 @@ Add the EmailQueue component to your controller
 	# ../src/Controller/DemoController.php
 	
 	public function initialize()
-  {
+	{
 		parent::initialize();
 		
 		# load the EmailQueue's EmailQueueComponent
@@ -170,9 +167,9 @@ And then to actually Queue an email, just specify the email **`type`**, who it's
 ```php
 	# in your controller function
 	public function someRandomFunction()
-  {
+	{
+		# ... do some stuff ...
 		
-		# ...
         $this->EmailQueue->add('demo', 'test@user.com', ['name'=>'Test User']);
         
 	}
@@ -188,6 +185,53 @@ bin/cake EmailQueue.process
 
 The shell has the following options:
 
-* `-limit n` or `-l n` will set the query limit() to `n` where n is an integer. default `1`
-* `-status xyz` or `-s xyz` will process only emails with status `xyz`. default `pending`
-  * choice(s) : `pending|failed`
+* `--limit n` or `-l n` 
+  * will set the query limit() to `n` where n is an integer.
+  * default `20`
+* `--status foo` or `-s foo`
+  * will process only emails with status `foo`
+  * choice(s) : `pending|failed|sent`
+  * default `pending`
+* `--type foo` or `-t foo`
+  * will only process emails of type `foo`
+  * choice(s) are built from `Configure::read('EmailQueue.specific');`
+  * default `all`
+* `--id foo`
+  * will only process emails with id `foo` (as long as it also matched the other filters/config settings)
+
+All the options can be chained together.
+
+### CLI Examples
+
+To send all pending emails, run the following
+
+```bash
+bin/cake EmailQueue.process
+```
+
+To explicitly send all `pending` emails, run the following
+
+```bash
+bin/cake EmailQueue.process -s pending
+```
+To send all emails of type `order-confirmation`, run the following
+
+```bash
+bin/cake EmailQueue.process -t order-confirmation
+```
+To send up to `100` emails at once, run the following
+
+```bash
+bin/cake EmailQueue.process -l 100
+```
+To send a specific email, run the following
+
+```bash
+bin/cake EmailQueue.process --id "5869e7fd-ccf3-46c2-9b15-844335b9a86d"
+```
+
+To send up to `100`, `failed`, `user-resetpw` emails, run the following
+
+```bash
+bin/cake EmailQueue.process -l 100 -s failed -t user-resetpw
+```

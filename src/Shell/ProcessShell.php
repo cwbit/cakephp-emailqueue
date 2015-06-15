@@ -16,7 +16,7 @@ class ProcessShell extends Shell
             ->addOption('limit', [
                 'short' => 'l',
                 'help' => 'how many queue records to process at once',
-                'default' => 1,
+                'default' => 20,
                 ])
             ->addOption('status', [
                 'short' => 's',

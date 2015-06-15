@@ -104,8 +104,7 @@ class EmailQueueManager
         $result = [];
 
         # find all the emails we need to send
-        $emails = $this->EmailQueue
-                            ->find();
+        $emails = $this->EmailQueue->find();
 
         # apply filters if set
         if (isset($options['limit'])) :
