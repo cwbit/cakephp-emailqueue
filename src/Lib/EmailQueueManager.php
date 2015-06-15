@@ -99,14 +99,27 @@ class EmailQueueManager
      *
      * @return array of results from each email send
      */
-    public function process()
+    public function process($options = [])
     {
         $result = [];
 
         # find all the emails we need to send
         $emails = $this->EmailQueue
-                            ->find('pending')
-                            ->all();
+                            ->find();
+
+        # apply filters if set
+        if (isset($options['limit'])) :
+            $emails->limit($options['limit']);
+        endif;
+        if (isset($options['type'])) :
+            $emails->where(['EmailQueues.type' => $options['type']]);
+        endif;
+        if (isset($options['status'])) :
+            $emails->where(['EmailQueues.status' => $options['status']]);
+        endif;
+        if (isset($options['id'])) :
+            $emails->where(['EmailQueues.id' => $options['id']]);
+        endif;
 
         # build and send each email
         foreach ($emails as $email) :
