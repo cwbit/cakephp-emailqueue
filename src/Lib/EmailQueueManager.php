@@ -53,7 +53,17 @@ class EmailQueueManager
         'cc_addr' => 'cc',      # change key 'cc_addr' to 'cc'
         'bcc_addr' => 'bcc',    # change key 'bcc_addr' to 'bcc'
         ];
-    
+
+    /**
+     * Constructor - sets up the Manager
+     */
+    public function __construct()
+    {
+        # Get the EmailQueues table
+        $this->EmailQueue = TableRegistry::get('EmailQueue.EmailQueues');
+    }
+
+
     /**
      * Queues and email for delivery by storing it in the database for processing
      * @param array $vars array of key => value pairs accepted by the EmailQueue entity objects
@@ -61,7 +71,6 @@ class EmailQueueManager
      */
     public function add($vars)
     {
-        $this->EmailQueue = TableRegistry::get('EmailQueue.EmailQueues');
         $email = $this->EmailQueue->newEntity($vars);
         $this->EmailQueue->save($email);
         return $email;
@@ -94,9 +103,6 @@ class EmailQueueManager
     {
         $result = [];
 
-        # Get the EmailQueues table
-        $this->EmailQueue = TableRegistry::get('EmailQueue.EmailQueues');
-        
         # find all the emails we need to send
         $emails = $this->EmailQueue
                             ->find('pending')
