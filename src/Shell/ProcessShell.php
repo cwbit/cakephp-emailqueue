@@ -3,6 +3,7 @@
 namespace EmailQueue\Shell;
 
 use Cake\Console\Shell;
+use Cake\Core\Configure;
 use EmailQueue\Lib\EmailQueueManager;
 
 class ProcessShell extends Shell
@@ -18,9 +19,21 @@ class ProcessShell extends Shell
                 ])
             ->addOption('status', [
                 'short' => 's',
-                'help' => 'only queue items in this status will be processed',
+                'help' => 'only queue entities in this status will be processed',
                 'default' => 'pending',
-                'choices' => ['pending', 'failed'],
+                'choices' => ['pending', 'failed', 'sent'],
+                ])
+            ->addOption('id', [
+                'help' => 'supply an ID to send a specific email',
+                ]);
+
+        # build a list of possible types from the config file
+        $types = array_keys(Configure::read('EmailQueue.specific')) ?: [];
+        $parser
+            ->addOption('type', [
+                'short' => 't',
+                'help' => 'only queue entities of this type will be processed',
+                'choices' => $types,
                 ]);
         return $parser;
     }
