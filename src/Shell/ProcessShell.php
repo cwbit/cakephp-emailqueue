@@ -3,6 +3,7 @@
 namespace EmailQueue\Shell;
 
 use Cake\Console\Shell;
+use EmailQueue\Lib\EmailQueueManager;
 
 class ProcessShell extends Shell
 {
@@ -22,5 +23,20 @@ class ProcessShell extends Shell
                 'choices' => ['pending', 'failed'],
                 ]);
         return $parser;
+    }
+
+    public function initiliaze()
+    {
+        parent::initiliaze();
+
+        $this->loadModel('EmailQueues');
+    }
+
+    public function main()
+    {
+        $mgr = new EmailQueueManager();
+
+        $this->out(pj($mgr->process()));
+
     }
 }
