@@ -5,6 +5,7 @@ namespace EmailQueue\Shell;
 use Cake\Console\Shell;
 use Cake\Core\Configure;
 use EmailQueue\Lib\EmailQueueManager;
+use Cake\Log\Log;
 
 class ProcessShell extends Shell
 {
@@ -47,7 +48,25 @@ class ProcessShell extends Shell
     {
         $mgr = new EmailQueueManager();
 
-        $this->out(pj($mgr->process()));
+        # if passed an option with OR pipes, build to an array
+        # TODO doesn't seem to be support at the SHELL level
+        # TODO extend ConsoleInputOption::validValue to handle exploded params, then $parser->addOption( new MultiConsoleInputOption(args..))
+        // switch (true) :
+        //     case isset($this->params['type']):
+        //         $this->params['type'] = explode('|', $this->params['type']);
+        //         break;
+        //     case isset($this->params['status']):
+        //         $this->params['status'] = explode('|', $this->params['status']);
+        //         break;
+        // endswitch;
+
+        $result = $mgr->process($this->params);
+
+        foreach ($result as $email) :
+            $this->out("STATUS: {$email->status} ID: {$email->id}");
+        endforeach;
+
+        $this->out('Done.');
 
     }
 }

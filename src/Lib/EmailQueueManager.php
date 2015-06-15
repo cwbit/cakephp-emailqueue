@@ -134,7 +134,7 @@ class EmailQueueManager
                 $e->profile(array_intersect_key($config, array_filter($this->_accessible)));
 
                 # now that the email is built, send it
-                $result[] = $e->send();
+                $e->send();
 
                 # if we want to remove the email after it's sent, do so
                 if ($config['deleteAfterSend']) :
@@ -146,9 +146,14 @@ class EmailQueueManager
                     $email->sent_on = date('Y-m-d H:i:s');
                     $this->EmailQueue->save($email);
                 endif;
+
+                $result[] = $email;
                 
             } catch (Exception $e) {
                 Log::error($e->getMessage());
+                $email->status = 'failed';
+                $this->EmailQueue->save($email);
+                $result[] = $email;
                 continue;
             }
         endforeach;
@@ -200,9 +205,9 @@ class EmailQueueManager
     /**
      * Re-maps the configuration keys based on $this::_map
      *
-     * This was added because the \Network\Email\Email::profile needs to set `to` which is a reserved word in MySQL. So we store it as `to_addr` in the database and re-map it as `to` before we try and use it
+     * This was added because the \Network\Email\Email::profile needs to set `to` which is a reserved word in MySQL. So we store it as `to_addr` in the database and re-map it as `to` before we try and use it instead of dealing with the overhead of quoting all the SQL statements
      * @param  array $config configuration array
-     * @return array         formatted configuration array
+     * @return array formatted configuration array
      */
     private function _remapKeys($config)
     {
