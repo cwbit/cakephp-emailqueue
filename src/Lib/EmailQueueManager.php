@@ -77,7 +77,7 @@ class EmailQueueManager
      */
     public function quickAdd($type, $to_addr, $viewVars)
     {
-        return $this->add(compact('type', 'to_addr', 'viewVars'));
+        return $this->add(compact('type', 'to_addr', 'viewVars') + ['status'=>'pending']);
     }
 
     /**
