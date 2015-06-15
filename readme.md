@@ -7,30 +7,12 @@ It's not cool to bomb or hold up an order because you can't send an email confir
 
 ***HOW?***
 
-1. Create the database table
-2. Load the plugin
-3. Configure the plugin
-4. Use the plugin
+2. [Install the Plugin](#plugin-installation)
+1. [Create the database table](#database-installation)
+3. [Configure the plugin](#plugin-configuration)
+4. [Use the plugin](#plugin-usage)
   5. Queue an email
   6. Process the queue
-
-### Database Installation
-Run the following script to set up the database for the plugin
-
-```sql
-CREATE TABLE IF NOT EXISTS `email_queues` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `type` varchar(255) NOT NULL, -- TYPE of the email, e.g. order-confirm. This is used to get the set of configs EmailQueue.specific.{$type} see below
-  `to_addr` varchar(1020) NOT NULL, -- will be mapped to CakeEmail::to()
-  -- `cc_addr` TEXT NOT NULL, -- optional, generally you do a global CC in the config file. -- mapped to CakeEmail::cc()
-  `viewVars` TEXT NOT NULL, -- will be mapped to CakeEmail::viewVars()
-  `status` varchar(255) NOT NULL DEFAULT 'pending', -- by default only pending emails will be considered
-  `sent_on` timestamp NULL DEFAULT NULL, -- when the email was sent
-  `created` timestamp NULL DEFAULT NULL,
-  `modified` timestamp NULL DEFAULT NULL,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 ;
-```
 
 ### Plugin Installation
 
@@ -52,6 +34,8 @@ composer require cwbit/cakephp-emailqueue:~1
 #### Manual Install
 
 You can also manually load this plugin in your App
+
+:warning: Manual installation of this plugin is not supported, but should work. Use at your own risk.
 
 ##### loading the plugin in your app
 Add the source code in this project into `src/Plugins/EmailQueue`
@@ -87,7 +71,18 @@ Then you need to issue the following command on the commandline
 ```
 If you are unable to get composer autoloading to work, uncomment the `'autoload' => true` line in your `bootstrap.php` `Plugin::load(..)` command (see loading section)
 
-### Configuration
+### Database Installation
+
+Run the following migration command from inside your app directory to build the database for this plugin
+
+```bash
+ cd /path/to/your/app/root
+ bin/cake migrations migrate --plugin EmailQueue
+ ```
+
+ You should now see a database table called `email_queues` and likely another called `email_queue_phinxlog` (used to store the current migration state, you can ignore this)
+
+### Plugin Configuration
 This section may seem complicated but it's really not, trust me.
 
 ***TLDR;*** **we dynamically build emails by combining a bunch of config settings that directly match up to the configurable settings in \Cake\Email\Email.**
@@ -149,11 +144,11 @@ return [
 
 ```
 
-### Using the EmailQueue
+### Plugin Usage
 Using the EmailQueue is a two-step process
 
 1. Queue the email
-2. Process the email queue
+2. Process the email queue (CRON)
 
 ##### Queue an Email
 Add the EmailQueue component to your controller
@@ -161,18 +156,21 @@ Add the EmailQueue component to your controller
 ```php
 	# ../src/Controller/DemoController.php
 	
-	public function initialize(){
+	public function initialize()
+  {
 		parent::initialize();
 		
 		# load the EmailQueue's EmailQueueComponent
 		$this->loadComponent('EmailQueue.EmailQueue');
 	}
 ```
+
 And then to actually Queue an email, just specify the email **`type`**, who it's **`to`**, and any **`viewVars`** the Template (*set in the config `EmailQueue.specific.{$type}`*) will need when rendering itself.
 
 ```php
 	# in your controller function
-	public function someRandomFunction(){
+	public function someRandomFunction()
+  {
 		
 		# ...
         $this->EmailQueue->add('demo', 'test@user.com', ['name'=>'Test User']);
@@ -181,15 +179,15 @@ And then to actually Queue an email, just specify the email **`type`**, who it's
 ```
 
 ##### Sending Queued Emails
-Currently the Queued emails are processed by running the `EmailQueueComponent::process()` function (not optimal)
 
-To automatically process the email queue (via CRON) just expose the `process` method thru a controller (see `DemoController::cron_emails()` for an example) and call it via URL
+Manually run, or add to CRON, the following commandline command
 
-**TODO: this should a use Cake Shell**
+```bash
+bin/cake EmailQueue.process
+```
 
-### Demo Controller
+The shell has the following options:
 
-**warning: the demo controller is only available while in { debug : true }**
-
-Load the following url (while in debug mode) `../email_queue/demo/test`
-or view the file `src/Controller/DemoController.php`
+* `-limit n` or `-l n` will set the query limit() to `n` where n is an integer. default `1`
+* `-status xyz` or `-s xyz` will process only emails with status `xyz`. default `pending`
+  * choice(s) : `pending|failed`
