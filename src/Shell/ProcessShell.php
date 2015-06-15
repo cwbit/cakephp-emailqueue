@@ -38,11 +38,9 @@ class ProcessShell extends Shell
         return $parser;
     }
 
-    public function initiliaze()
+    public function initialize()
     {
-        parent::initiliaze();
-
-        $this->loadModel('EmailQueues');
+        parent::initialize();
     }
 
     public function main()
