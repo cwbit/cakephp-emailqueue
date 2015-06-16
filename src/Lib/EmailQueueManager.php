@@ -122,39 +122,36 @@ class EmailQueueManager
 
         # build and send each email
         foreach ($emails as $email) :
+            # get the config settings for this email
+            $config = $this->_getConfig($email);
+
+            # build and send the email
+            $e = new Email('default');
+
+            # set the profile() by merging the $config'd settings with what we've deemed $_accessible (similar to Entity::$_accessible, ie. where [.., 'property' => true, ..])
+            $e->profile(array_intersect_key($config, array_filter($this->_accessible)));
+
             try {
-                # get the config settings for this email
-                $config = $this->_getConfig($email);
-
-                # build and send the email
-                $e = new Email('default');
-
-                # set the profile() by merging the $config'd settings with what we've deemed $_accessible (similar to Entity::$_accessible, ie. where [.., 'property' => true, ..])
-                $e->profile(array_intersect_key($config, array_filter($this->_accessible)));
-
                 # now that the email is built, send it
                 $e->send();
+                $email->status = 'sent';
+                $email->sent_on = date('Y-m-d H:i:s');
 
-                # if we want to remove the email after it's sent, do so
-                if ($config['deleteAfterSend']) :
-                    $this->EmailQueue->delete($email);
-
-                # otherwise, just mark it sent and leave it there
-                else :
-                    $email->status = 'sent';
-                    $email->sent_on = date('Y-m-d H:i:s');
-                    $this->EmailQueue->save($email);
-                endif;
-
-                $result[] = $email;
-                
-            } catch (Exception $e) {
+            } catch (\Exception $e) {
                 Log::error($e->getMessage());
                 $email->status = 'failed';
-                $this->EmailQueue->save($email);
-                $result[] = $email;
-                continue;
+                $email->error = $e->getMessage();
             }
+
+            # either delete or update the email depending on Configure::read(EmailQueue.master.deleteAfterSend)
+            if ($config['deleteAfterSend'] && $email->status === 'sent') :
+                $this->EmailQueue->delete($email);
+            else :
+                $this->EmailQueue->save($email);
+            endif;
+
+            $result[] = $email;
+                
         endforeach;
 
         # return the results from each email
