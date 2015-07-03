@@ -132,10 +132,16 @@ class EmailQueueManager
             $e->profile(array_intersect_key($config, array_filter($this->_accessible)));
 
             try {
+                set_error_handler(function ($errno, $errstr, $errfile, $errline) {
+                    throw new \ErrorException($errstr, $errno, 0, $errfile, $errline);
+                });
+
                 # now that the email is built, send it
                 $e->send();
                 $email->status = 'sent';
                 $email->sent_on = date('Y-m-d H:i:s');
+
+                restore_error_handler();
 
             } catch (\Exception $e) {
                 Log::error($e->getMessage());
