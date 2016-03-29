@@ -10,9 +10,19 @@
   ],
   "minimum-stability": "dev",
   "require": {
-    "composer/installers": "~1.0"
+    "php": ">=5.5.9",
+    "cakephp/cakephp": "~3.0",
+    "cakephp/plugin-installer": "*",
+    "cakephp/migrations": "~1.0"
   },
-  "extra": {
-    "installer-name": "EmailQueue"
+  "autoload": {
+    "psr-4": {
+      "EmailQueue\\": "src"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "EmailQueue\\Test\\": "tests"
+    }
   }
 }
