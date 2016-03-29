@@ -18,7 +18,7 @@ try {
 } catch (\Exception $e) {
     # if EmailQueue is already set through the bootstrap process, the php file is technically NOT required.
     if (!Configure::check('EmailQueue.master.alwaysRequireConfigFile') || Configure::read('EmailQueue.master.alwaysRequireConfigFile') !== false) :
-      die('Fatal Error. Either the EmailQueue settings file MUST EXIST in `config/emailqueue.php`, or the normal bootstrap process MUST return a full `EmailQueue` options array AND set `EmailQueue.master.alwaysRequireConfigFile` === false. For a sample file please see EmailQueue.config/emailqueue_sample.php. Error:'$e->getMessage() . "\n");
+      die('Fatal Error. Either the EmailQueue settings file MUST EXIST in `config/emailqueue.php`, or the normal bootstrap process MUST return a full `EmailQueue` options array AND set `EmailQueue.master.alwaysRequireConfigFile` === false. For a sample file please see EmailQueue.config/emailqueue_sample.php. Error:' . $e->getMessage() . "\n");
     endif;
 }
 
