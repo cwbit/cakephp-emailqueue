@@ -2,7 +2,7 @@
 # ./src/config/emailqueue.php
 /**
  * Master configuration file for the EmailQueue Plugin
- * 
+ *
  * This returns an array of all possible EmailQueue options
  *     EmailQueue
  *         master
@@ -35,10 +35,11 @@
  */
 return [
     'EmailQueue' => [
-        /** 
+        /**
          * Master configuration settings
          */
         'master' => [
+            'alwaysRequireConfigFile' => true,    # true, will always require a config/emailqueue.php file to exist; false, will allow bootstrap to continue if Configure::check('EmailQueue') exists
             'deleteAfterSend'   => false,   # true, will delete after send; false, will just mark sent
             'testingModeOverride' => true,  # true, will load EmailQueue.override with highest priority
             ], # end of MASTER
@@ -63,8 +64,8 @@ return [
          * Things like the default 'from' setting can be set in here and will apply to all emails unless replaced by values from the DATABASE, a SPECIFIC template setting, or the OVERRIDE
          */
         'default' => [
-            'cc'                => ['default_cc@email.com'],    
-            'emailFormat'       => 'both',                      
+            'cc'                => ['default_cc@email.com'],
+            'emailFormat'       => 'both',
             'from'              => 'default_sender@email.com',
             'layout'            => 'EmailQueue.default',
             ], # end of DEFAULT
@@ -82,10 +83,10 @@ return [
          *     }
          */
         'specific' => [
-            'demo' => [                 
+            'demo' => [
                 'subject'       => 'This is just a test!',
-                'template'      => 'EmailQueue.test',  
-                'emailFormat'   => 'html', 
+                'template'      => 'EmailQueue.test',
+                'emailFormat'   => 'html',
                 'viewVars'      => [
                     'name'      => 'User',
                     'version'   => '123',
