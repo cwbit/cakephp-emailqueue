@@ -21,6 +21,3 @@ try {
       die('Fatal Error. Either the EmailQueue settings file MUST EXIST in `config/emailqueue.php`, or the normal bootstrap process MUST return a full `EmailQueue` options array AND set `EmailQueue.master.alwaysRequireConfigFile` === false. For a sample file please see EmailQueue.config/emailqueue_sample.php. Error:' . $e->getMessage() . "\n");
     endif;
 }
-
-
-?>
