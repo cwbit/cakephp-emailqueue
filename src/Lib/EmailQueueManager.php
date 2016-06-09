@@ -3,10 +3,13 @@
 namespace EmailQueue\Lib;
 
 use Cake\Core\Configure;
+use Cake\Datasource\Exception\RecordNotFoundException;
+use EmailQueue\Model\Entity\EmailQueue;
+use Cake\Log\Log;
 use Cake\Network\Email\Email;
 use Cake\ORM\TableRegistry;
 use Cake\Utility\Hash;
-use Cake\Log\Log;
+use Cake\Utility\Text;
 
 class EmailQueueManager
 {
@@ -28,7 +31,7 @@ class EmailQueueManager
         'returnPath' => true,   #: Email address or and array of addresses to return if have some error. See Email::returnPath().
         'messageId' => true,    #: Message ID of e-mail. See Email::messageId().
         'subject' => true,      #: Subject of the message. See Email::subject().
-        'message' => false,     #: Content of message. Do not set this field if you are using rendered content.
+        'message' => false, # NOT SUPPORTED  #: Content of message. Do not set this field if you are using rendered content.
         'headers' => true,      #: Headers to be included. See Email::setHeaders().
         'viewRender' => true,   #: If you are using rendered content, set the view classname. See Email::viewRender().
         'template' => true,     #: If you are using rendered content, set the template name. See Email::template().
@@ -125,13 +128,16 @@ class EmailQueueManager
             # get the config settings for this email
             $config = $this->_getConfig($email);
 
-            # build and send the email
+            # build the Email profile array
+            $profile = $this->_buildProfile($config, $email);
+
+            # build the email using Email::profile([..]) to set the whole thing up at once
             $e = new Email('default');
+            $e->profile($profile);
 
-            # set the profile() by merging the $config'd settings with what we've deemed $_accessible (similar to Entity::$_accessible, ie. where [.., 'property' => true, ..])
-            $e->profile(array_intersect_key($config, array_filter($this->_accessible)));
-
+            # attempt to send it
             try {
+                # try and catch errors during transmission
                 set_error_handler(function ($errno, $errstr, $errfile, $errline) {
                     throw new \ErrorException($errstr, $errno, 0, $errfile, $errline);
                 });
@@ -157,11 +163,34 @@ class EmailQueueManager
             endif;
 
             $result[] = $email;
-                
+
         endforeach;
 
         # return the results from each email
         return $result;
+    }
+
+    /**
+     * Convert the configuration settings into something ingestible by Email::profile()
+     */
+    protected function _buildProfile(array $config)
+    {
+        # two types of emails are supported,
+        # rendered (uses layout ONLY) or dynamic-rendered (uses layout to render _message_html or _message_text)
+        # this will pipe the message bodies (if specified) into viewVars (prefixed with '_' to avoid collision with actual viewVars)
+        if (isset($config['message_html']) && !is_null($config['message_html'])) :
+          $config['message_html'] = Text::insert($config['message_html'], $config['viewVars']);
+            $config['viewVars']['_message_html'] = $config['message_html'];
+        endif;
+        if (isset($config['message_text']) && !is_null($config['message_text'])) :
+          $config['message_text'] = Text::insert($config['message_text'], $config['viewVars']);
+            $config['viewVars']['_message_text'] = $config['message_text'];
+        endif;
+
+        # finally, pare down to values we can pass to Email::profile()
+        $config = array_intersect_key($config, array_filter($this->_accessible));
+
+        return $config;
     }
 
     /**
@@ -176,8 +205,18 @@ class EmailQueueManager
         $master = Configure::read('EmailQueue.master');
 
         # get the specific details for the email.type
-        $specific = Configure::read('EmailQueue.specific.'.$email->type);
-        
+        # either from the config file (for backward-compat) or the database
+        if (Configure::check("EmailQueue.specific.{$email->type}")) :
+          $specific = Configure::read('EmailQueue.specific.'.$email->type);
+        else :
+          $this->EmailTemplates = TableRegistry::load('EmailQueue.EmailTemplates');
+          $specific = $this->EmailTemplates->find()->where(['EmailTemplates.type' => $email->type])->first();
+          if (!$specific) :
+            throw new RecordNotFoundException("Cannot find EmailQueue type {$email->type}");
+          endif;
+          $specific->toArray();
+        endif;
+
         # get the default email settings
         $default = Configure::read('EmailQueue.default');
 

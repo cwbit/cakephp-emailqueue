@@ -72,6 +72,9 @@ return [
 
 
         /**
+         * DEPRECATED - the recommended way to do this is to set up an EmailTemplate in the database
+         * -- THIS WILL STILL WORK FOR BACKWARD COMPATABILITY --
+         *
          * This is an array of SPECIFIC settings for each email TYPE
          * format is
          *     invoice : {              # this is the 'type' of the email
@@ -81,6 +84,7 @@ return [
          *         viewVars : [ .. ]    # and array of variables that the view needs
          *         ...                  # any other settings needed for an Email
          *     }
+         *
          */
         'specific' => [
             'demo' => [

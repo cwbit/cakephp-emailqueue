@@ -1,4 +1,4 @@
-<?
+<?php
 namespace EmailQueue\Database\Type;
 
 use Cake\Database\Driver;
@@ -6,7 +6,7 @@ use Cake\Database\Type;
 use PDO;
 
 /**
- * JSON Type 
+ * JSON Type
  * @see http://book.cakephp.org/3.0/en/orm/database-basics.html#adding-custom-database-types
  */
 class JsonType extends Type {
