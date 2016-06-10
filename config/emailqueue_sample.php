@@ -44,7 +44,6 @@ return [
             'testingModeOverride' => true,  # true, will load EmailQueue.override with highest priority
             ], # end of MASTER
 
-
         /**
          * OVERRIDE settings
          * Priority: HIGHEST (OVERRIDE)
@@ -55,7 +54,6 @@ return [
             'from'              => 'override_sender@email.com',
             'to'                => 'override_to@email.com',
             ], # end of OVERRIDE
-
 
         /**
          * DEFAULT settings
@@ -73,34 +71,5 @@ return [
             ], # end of DEFAULT
 
 
-        /**
-         * DEPRECATED - the recommended way to do this is to set up an EmailTemplate in the database
-         * -- THIS WILL STILL WORK FOR BACKWARD COMPATABILITY --
-         *
-         * This is an array of SPECIFIC settings for each email TYPE
-         * format is
-         *     invoice : {              # this is the 'type' of the email
-         *         subject : 'test',    # this will set the email subject to 'test'
-         *         template : 'invoice',# what (view) template file the Email will render
-         *         layout : 'foo',      # what layout the `template` will be rendered on
-         *         viewVars : [ .. ]    # and array of variables that the view needs
-         *         ...                  # any other settings needed for an Email
-         *     }
-         *
-         */
-        // 'specific' => [
-        //     'demo' => [
-        //         'subject'       => 'This is just a test!',
-        //         'template'      => 'EmailQueue.test',
-        //         'emailFormat'   => 'html',
-        //         'viewVars'      => [
-        //             'name'      => 'User',
-        //             'version'   => '123',
-        //             'foo'       => 'bar',
-        //             ],
-        //         ], # end of type `test`
-        //     ], # end of SPECIFIC
-        // ] # end of EmailQueue configs
-
-
-    ];
+        ] # end of EmailQueue configs
+  ];
