@@ -14,8 +14,11 @@ use Cake\Utility\Text;
 class EmailQueueManager
 {
 
+    const STATUS_SENT = 'sent';
+    const STATUS_ERROR = 'error';
+    const STATUS_PENDING = 'pending';
     /**
-     * List of usable email variables
+     * List of usable email variables for Email::profile()
      *
      * This is identical to Entity::$_accessible with the exception that there is no '*' (wildcard) allowed
      * @var array
@@ -55,27 +58,48 @@ class EmailQueueManager
         'to_addr' => 'to',      # change key 'to_addr' to 'to'
         'cc_addr' => 'cc',      # change key 'cc_addr' to 'cc'
         'bcc_addr' => 'bcc',    # change key 'bcc_addr' to 'bcc'
+        'from_addr' => 'from',
+        'sender_addr' => 'sender',
         ];
 
     /**
+     * `_config*` hold the configuration arrays for the App settings
+     * _configDefault holds the default settings to be applied to all emails at (lowest priority)
+     * _configOverride holds override settings that override everything except master to allow for DEV env testing (2nd highest priority)
+     * _configMaster holds the master config settings for the entire plugin (highest priority)
+     * @var array
+     */
+    protected $_configDefault = [];
+    protected $_configMaster = [];
+    protected $_configOverride = [];
+
+    /**
      * Constructor - sets up the Manager
+     * Loads the Tables and reads the global configuration data (nonce)
      */
     public function __construct()
     {
         # Get the EmailQueues table
-        $this->EmailQueue = TableRegistry::get('EmailQueue.EmailQueues');
+        $this->EmailQueues = TableRegistry::get('EmailQueue.EmailQueues');
+        $this->EmailTemplates = TableRegistry::get('EmailQueue.EmailTemplates');
+        $this->EmailLogs = TableRegistry::get('EmailQueue.EmailLogs');
+
+        # load in the config data
+        $this->_configMaster = Configure::read('EmailQueue.master');
+        $this->_configDefault = Configure::read('EmailQueue.default');
+        $this->_configOverride = ($master['testingModeOverride']) ? Configure::read('EmailQueue.override') : [];
+
     }
 
-
     /**
-     * Queues and email for delivery by storing it in the database for processing
+     * Queues an email for delivery by storing it in the database for processing
      * @param array $vars array of key => value pairs accepted by the EmailQueue entity objects
      * @return mixed results of save operation
      */
-    public function add($vars)
+    public function add(array $vars)
     {
-        $email = $this->EmailQueue->newEntity($vars);
-        $this->EmailQueue->save($email);
+        $email = $this->EmailQueues->newEntity($vars);
+        $this->EmailQueues->save($email);
         return $email;
     }
 
@@ -89,7 +113,7 @@ class EmailQueueManager
      */
     public function quickAdd($type, $to_addr, $viewVars)
     {
-        return $this->add(compact('type', 'to_addr', 'viewVars') + ['status'=>'pending']);
+        return $this->add(compact('type', 'to_addr', 'viewVars') + ['status'=>self::STATUS_PENDING]);
     }
 
     /**
@@ -102,12 +126,12 @@ class EmailQueueManager
      *
      * @return array of results from each email send
      */
-    public function process($options = [])
+    public function process(array $options = [])
     {
         $result = [];
 
         # find all the emails we need to send
-        $emails = $this->EmailQueue->find();
+        $emails = $this->EmailQueues->find();
 
         # apply filters if set
         if (isset($options['limit'])) :
@@ -128,14 +152,13 @@ class EmailQueueManager
             # get the config settings for this email
             $config = $this->_getConfig($email);
 
-            # build the Email profile array
+            # build the Email::profile() array
             $profile = $this->_buildProfile($config, $email);
 
             # build the email using Email::profile([..]) to set the whole thing up at once
-            $e = new Email('default');
-            $e->profile($profile);
+            $e = new Email($profile);
 
-            # attempt to send it
+            # attempt to send the email
             try {
                 # try and catch errors during transmission
                 set_error_handler(function ($errno, $errstr, $errfile, $errline) {
@@ -144,22 +167,41 @@ class EmailQueueManager
 
                 # now that the email is built, send it
                 $e->send();
-                $email->status = 'sent';
+                $email->status = self::STATUS_SENT;
                 $email->sent_on = date('Y-m-d H:i:s');
 
                 restore_error_handler();
 
             } catch (\Exception $e) {
                 Log::error($e->getMessage());
-                $email->status = 'failed';
+                $email->status = self::STATUS_ERROR;
                 $email->error = $e->getMessage();
             }
 
+            # log it, yo
+            $e = $e->jsonSerialize();
+            $log = $this->EmailLogs->newEntity([
+              'email_id' => $email->id,
+              'email_type' => $email->type,
+              'email_data' => [
+                'config' => $config,
+                'profile' => $email->toArray(),
+                'email' => $e,
+              ],
+              'sent_to' => $e['_to'],
+              'sent_from' => $e['_from'],
+              'sent_on' => $email->sent_on ?: null,
+              'processed_on' => new \DateTime(),
+              'status' => $email->status,
+              'status_message' => $email->error,
+            ]);
+            $this->EmailLogs->save($log);
+
             # either delete or update the email depending on Configure::read(EmailQueue.master.deleteAfterSend)
-            if ($config['deleteAfterSend'] && $email->status === 'sent') :
-                $this->EmailQueue->delete($email);
+            if ($config['deleteAfterSend'] && $email->status === self::STATUS_SENT) :
+                $this->EmailQueues->delete($email);
             else :
-                $this->EmailQueue->save($email);
+            #    $this->EmailQueues->save($email);
             endif;
 
             $result[] = $email;
@@ -195,37 +237,30 @@ class EmailQueueManager
 
     /**
      * Builds a complete set of configuration settings by reading in several config arrays and merging them according to priority
-     *
+     * This works by loading the configuration settings first for all emails, then the specific email type, then the email settings itself, and finally giving the testing-mode override and master settings the highest priority
+     * This function supports the old style of declaring the 'specific' email type settings in the Config array, but the preferred method is through an EmailTemplate
      * @param Entity $email email entity
      * @return array complete configuration array
      */
-    protected function _getConfig($email)
+    protected function _getConfig(EmailQueue $email)
     {
-        # get the master configuration details for the plugin itself
-        $master = Configure::read('EmailQueue.master');
 
         # get the specific details for the email.type
         # either from the config file (for backward-compat) or the database
         if (Configure::check("EmailQueue.specific.{$email->type}")) :
           $specific = Configure::read('EmailQueue.specific.'.$email->type);
         else :
-          $this->EmailTemplates = TableRegistry::load('EmailQueue.EmailTemplates');
-          $specific = $this->EmailTemplates->find()->where(['EmailTemplates.type' => $email->type])->first();
+          $specific = $this->EmailTemplates->find()->where(['EmailTemplates.email_type' => $email->type])->first();
           if (!$specific) :
-            throw new RecordNotFoundException("Cannot find EmailQueue type {$email->type}");
+            throw new RecordNotFoundException("Cannot find EmailQueue type '{$email->type}' in EmailTemplates table.");
           endif;
           $specific->toArray();
         endif;
 
-        # get the default email settings
-        $default = Configure::read('EmailQueue.default');
-
-        # if in `testingModeOverride` then load the override settings, otherwise just use a blank array (will have no effect)
-        $override = ($master['testingModeOverride']) ? Configure::read('EmailQueue.override') : [];
-
         # merge all the configs into one final complete array
-        $config = Hash::merge($default, $specific, $email->toArray(), $override, $master);
+        $config = Hash::merge($this->_configDefault, $specific, $email->toArray(), $this->_configOverride, $this->_configMaster);
 
+        # return a useable config array
         return $this->_formatConfig($config);
 
     }
@@ -235,7 +270,7 @@ class EmailQueueManager
      * @param  array $config configuration array
      * @return array         formatted configuration array
      */
-    private function _formatConfig($config)
+    private function _formatConfig(array $config)
     {
         # remap keys (if any)
         $config = $this->_remapKeys($config);
@@ -244,13 +279,13 @@ class EmailQueueManager
     }
 
     /**
-     * Re-maps the configuration keys based on $this::_map
+     * Re-maps the configuration keys based on $self::_map
      *
      * This was added because the \Network\Email\Email::profile needs to set `to` which is a reserved word in MySQL. So we store it as `to_addr` in the database and re-map it as `to` before we try and use it instead of dealing with the overhead of quoting all the SQL statements
      * @param  array $config configuration array
      * @return array formatted configuration array
      */
-    private function _remapKeys($config)
+    private function _remapKeys(array $config)
     {
         # remap keys
         foreach ($this->_map as $key => $remap) :

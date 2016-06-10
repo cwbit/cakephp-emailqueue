@@ -26,7 +26,7 @@ class JsonType extends Type {
     }
 
     public function toDatabase($value, Driver $driver) {
-        return json_encode($value);
+        return json_encode($value, JSON_PRETTY_PRINT);
     }
 
     public function toStatement($value, Driver $driver) {

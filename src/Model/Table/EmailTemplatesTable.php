@@ -2,7 +2,8 @@
 
 namespace EmailQueue\Model\Table;
 
-use App\Table\AppTable as Table;
+use Cake\ORM\Table as Table;
+use Cake\Database\Schema\Table as Schema;
 
 class EmailTemplatesTable extends Table{
       /**
@@ -11,22 +12,31 @@ class EmailTemplatesTable extends Table{
     	 * @return Schema the adjusted schema definition
     	 */
     	protected function _initializeSchema(Schema $schema) {
-            $schema->columnType('from', 'json')
-            ->columnType('type', 'json')
-            ->columnType('from', 'json')
-            ->columnType('sender', 'json')
-            ->columnType('to', 'json')
-            ->columnType('cc', 'json')
-            ->columnType('bcc', 'json')
-            ->columnType('replyTo', 'json')
-            ->columnType('readReceipt', 'json')
-            ->columnType('returnPath', 'json')
-            ->columnType('headers', 'json')
-            ->columnType('viewVars', 'json')
-            ->columnType('attachments', 'json')
-            ->columnType('helpers', 'json');
+            $schema->columnType('from_addr', 'json');
+            $schema->columnType('sender_addr', 'json');
+            $schema->columnType('to_addr', 'json');
+            $schema->columnType('cc_addr', 'json');
+            $schema->columnType('bcc_addr', 'json');
+            $schema->columnType('replyTo', 'json');
+            $schema->columnType('readReceipt', 'json');
+            $schema->columnType('returnPath', 'json');
+            $schema->columnType('headers', 'json');
+            $schema->columnType('viewVars', 'json');
+            $schema->columnType('attachments', 'json');
+            $schema->columnType('helpers', 'json');
 
             return $schema;
         }
 
+  	/**
+  	 * Initialize the table
+  	 * @param  array  $options
+  	 * @return void
+  	 */
+  	public function initialize(array $options){
+  		parent::initialize($options);
+
+  		# load the timestamp behavior so our created/modified fields are populated
+  		$this->addBehavior('Timestamp');
+  	}
 }

@@ -1,4 +1,4 @@
-<?
+<?php
 
 namespace EmailQueue\Model\Table;
 
@@ -12,7 +12,7 @@ class EmailQueuesTable extends Table{
 
 	/**
 	 * Initialize the table
-	 * @param  array  $options 
+	 * @param  array  $options
 	 * @return void
 	 */
 	public function initialize(array $options){
@@ -31,11 +31,11 @@ class EmailQueuesTable extends Table{
         $schema->columnType('viewVars', 'json');
         return $schema;
     }
-	
+
 	/**
 	 * Add the default table validation rules
 	 * @param  Validator $validator [description]
-	 * @return Validator 
+	 * @return Validator
 	 */
 	public function validationDefault( Validator $validator ) {
 		$validator
@@ -51,9 +51,9 @@ class EmailQueuesTable extends Table{
 
 	/**
 	 * Filter our Query object to only show emails that are pending
-	 * 
+	 *
 	 * This will be exposed as EmailQueues->find('pending')
-	 * 
+	 *
 	 * @param  Query  $query   Cake Query object
 	 * @param  array  $options array of query options (not currently used by this finder)
 	 * @return Query

@@ -6,12 +6,12 @@ use Cake\ORM\Entity;
 
 class EmailTemplate extends Entity
 {
-  private $_accessible = [
-      'from' => true,         #: Email or array of sender. See Email::from().
-      'sender' => true,       #: Email or array of real sender. See Email::sender().
-      'to' => true,           #: Email or array of destination. See Email::to().
-      'cc' => true,           #: Email or array of carbon copy. See Email::cc().
-      'bcc' => true,          #: Email or array of blind carbon copy. See Email::bcc().
+  protected $_accessible = [
+      'from_addr' => true,         #: Email or array of sender. See Email::from().
+      'sender_addr' => true,       #: Email or array of real sender. See Email::sender().
+      'to_addr' => true,           #: Email or array of destination. See Email::to().
+      'cc_addr' => true,           #: Email or array of carbon copy. See Email::cc().
+      'bcc_addr' => true,          #: Email or array of blind carbon copy. See Email::bcc().
       'replyTo' => true,      #: Email or array to reply the e-mail. See Email::replyTo().
       'readReceipt' => true,  #: Email address or an array of addresses to receive the receipt of read. See Email::readReceipt().
       'returnPath' => true,   #: Email address or and array of addresses to return if have some error. See Email::returnPath().
