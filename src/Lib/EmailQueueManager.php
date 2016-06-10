@@ -220,11 +220,9 @@ class EmailQueueManager
         # rendered (uses layout ONLY) or dynamic-rendered (uses layout to render _message_html or _message_text)
         # this will pipe the message bodies (if specified) into viewVars (prefixed with '_' to avoid collision with actual viewVars)
         if (isset($config['message_html']) && !is_null($config['message_html'])) :
-          $config['message_html'] = Text::insert($config['message_html'], $config['viewVars']);
             $config['viewVars']['_message_html'] = $config['message_html'];
         endif;
         if (isset($config['message_text']) && !is_null($config['message_text'])) :
-          $config['message_text'] = Text::insert($config['message_text'], $config['viewVars']);
             $config['viewVars']['_message_text'] = $config['message_text'];
         endif;
 
@@ -232,8 +230,18 @@ class EmailQueueManager
         $config['processor'] = (is_string($config['processor'])) ? [$config['processor']] : $config['processor'];
 
         # load the processors (in order) and run the config thru them
-        foreach ($config['processor'] as $processor) :
-          call_user_func_array([$processor,'process'], [&$config]);
+        foreach ($config['processor'] as $processor => $settings) :
+          # load the processor (with configs if set)
+          if (is_int($processor) && is_string($settings)):
+            $processor = new $settings;
+          elseif(is_string($processor) && !is_null($settings)):
+            $processor = new $processor($settings);
+          else :
+            throw new Exception("Could not load processor [$processor => $settings]");
+          endif;
+
+          # run the config thru them to be manipulated
+          $processor->process($config);
         endforeach;
 
         # finally, pare down to values we can pass to Email::profile()
