@@ -1,46 +1,21 @@
 # CakePHP 3 - EmailQueue Plugin
 This is a plugin for CakePHP 3 that let's you quickly Queue emails to be sent whenever a process function is called.
 
+Supports **Mustache** templating and **Markdown** by default.
+
 ***WHY?***
 
 It's not cool to bomb or hold up an order because you can't send an email confirmation. Better to queue the emails and process them in a batch later on, no?
 
-***HOW?***
+## Install
 
-2. [Install the Plugin](#plugin-installation)
-1. [Create the database table](#database-installation)
-3. [Configure the plugin](#plugin-configuration)
-4. [Use the plugin](#plugin-usage)
-  5. Queue an email
-  6. Process the queue
-
-### Plugin Installation
-
-1. Using Composer
-2. Manually
-  3. Loading the plugin in your app 
-  4. Setting up the namespace / autoloader
-3. CakePHP Bootstrapping
-4. Configuring the Plugin
-
-  
-#### Composer Install
-
-This plugin is on Packagist which means it can be easily installed with Composer.
+Use Composer (sorry if you're not sure what that is yet - go learn, it's a world-changer)
 
 ```
 composer require cwbit/cakephp-emailqueue:dev-master
 ```
 
-#### Manual Install
-
-You can also manually load this plugin in your App
-
-:warning: Manual installation of this plugin is not supported, but should work. Use at your own risk.
-
-##### loading the plugin in your app
-Add the source code in this project into `src/Plugins/EmailQueue`
-
+### Load the plugin
 Then configure your App to actually load this plugin
 
 ```php
@@ -62,101 +37,40 @@ Run the following migration command from inside your app directory to build the 
  bin/cake migrations migrate --plugin EmailQueue
 ```
 
- You should now see a database table called `email_queues` and likely another called `email_queue_phinxlog` (used to store the current migration state, you can ignore this)
+### Adjust `Configure` settings
 
-### Plugin Configuration
-This section may seem complicated but it's really not, trust me.
+Copy `emailqueue.sample.php` to `emailqueue.php` and change any settings you need. This is where you can set up default mail settings like `sender` and `replyTo` or even what `transport` layer you want to use as default.
 
-***TLDR;*** **we dynamically build emails by combining a bunch of config settings that directly match up to the configurable settings in \Cake\Email\Email.**
+If you need specific emails to send to specific people or through a specific transport layer then just make sure to set those in your `EmailTemplate` record in the database.
 
-##### Configuration Explanation
-The EmailQueue needs to be given some basic configuration before it can be used. The idea is to set up config settings for each of the different types of emails you're going to be sending - the `_getConfig($emailType)` function will merge all the configuration options into a complete set of information for the `Email` library
+### Set up your Mail Templates
 
-The parameters used to send the actual email are built by combining the 5 different config arrays to
+In your Database, set up some `EmailTemplates`, one for each type of email you want to send.
 
-```
-default <= specific <= database <= override <= master
-   ^											  ^
-  LOW											 HIGH
-PRIORITY  									   PRIORITY
-```
+The columns in this table are modeled after the `Email::profile()` and pretty much anything that `profile` accepts can be set in the record.
 
+You'll want one of these for each of the email types you want to send out; e.g. if you have a `password-reset` email just create a `EmailTemplate` where `email_type = password-reset`.
 
-* `master`
-  * settings for the plugin itself (no EMAIL-level settings)
-* `default`
-  * default settings applied to each email (with LOWEST priority)
-  * e.g. to apply a standard `reply-to` or `bcc`
-* `override`
-  * override settings applied to each email (with HIGHEST priority if `master.testingModeOverride = true`)
-  * e.g. to force all emails to send `to` while in dev
-* `specific.type`
-  * settings applied to email based on the `email->type` (with NORMAL priority)
-  * keyed by `email->type`
-  * e.g. to specify which `template` your `order-confirmation` email should be using, or that your `password-reset` email should send with `emailFormat => 'text'` instead of `both`
-* `database`
-  * database-level configuration settings are actually retrieved from the email entity in the queue table
-  * e.g. the actual `to` address for your email, and the `orderId` to be used to load the order details  
+`message_html` and `message_text` are `TEXT` fields where you can specify the body of the email for both the `html` and `text` messages respectively.
 
-##### Default Configuration
-Here is what the default configuration file might look like. `demo` in this example would be an email type that we support - it would load the `EmailQueue.test` view file, passing it `viewVars = ['name' => .., 'version' => .., 'foo' => ..]` and the email would be sent to `to_addr` from `from` and so on
+The default `provider`(s) in `Configure::('EmailQueue.default.provider')` allow for both `Mustache` templating and `Markdown` parsing. You can make your own providers if needed and just set them in your `EmailTemplate`
 
-```php
-# ./src/config/emailqueue.php
-/**
- * Master configuration file for the EmailQueue Plugin
- */
-return [
-    'EmailQueue' => [
-        'master' => [
-            'deleteAfterSend'   => false,   
-            'testingModeOverride' => false,  
-            ], # end of MASTER
-        'override' => [
-            'from'              => 'override_sender@email.com',
-            'to_addr'           => 'override_to@email.com',
-            ], # end of OVERRIDE
-        'default' => [
-            'cc_addr'           => ['default_cc@email.com'],    
-            'emailFormat'       => 'both',                      
-            'from'              => 'default_sender@email.com',
-            'layout'            => 'EmailQueue.default',
-            ], # end of DEFAULT
-        'specific' => [
-        	# ..
-            'demo' => [                 
-                'subject'       => 'This is just a test!',
-                'template'      => 'EmailQueue.test',  
-                'emailFormat'   => 'html', 
-                'viewVars'      => [
-                    'name'      => 'User',
-                    'version'   => '123',
-                    'foo'       => 'bar',
-                    ],
-                ], # end of type `test`
-            # ..
-            ], # end of SPECIFIC
-        ] # end of EmailQueue configs
-    ];
-
-```
-
-### Plugin Usage
-Using the EmailQueue is a two-step process
+# Plugin Usage
+Actually sending email with EmailQueue is a simple two-step process
 
 1. Queue the email
 2. Process the email queue (CRON)
 
-##### Queue an Email
+#### Queue an Email
 Add the EmailQueue component to your controller
 
 ```php
 	# ../src/Controller/DemoController.php
-	
+
 	public function initialize()
 	{
 		parent::initialize();
-		
+
 		# load the EmailQueue's EmailQueueComponent
 		$this->loadComponent('EmailQueue.EmailQueue');
 	}
@@ -169,13 +83,13 @@ And then to actually Queue an email, just specify the email **`type`**, who it's
 	public function someRandomFunction()
 	{
 		# ... do some stuff ...
-		
-        $this->EmailQueue->add('demo', 'test@user.com', ['name'=>'Test User']);
-        
+
+        $this->EmailQueue->quickAdd('demo', 'test@user.com', ['name'=>'Test User']);
+
 	}
 ```
 
-##### Sending Queued Emails
+#### Sending Queued Emails
 
 Manually run, or add to CRON, the following commandline command
 
@@ -185,7 +99,7 @@ bin/cake EmailQueue.process
 
 The shell has the following options:
 
-* `--limit n` or `-l n` 
+* `--limit n` or `-l n`
   * will set the query limit() to `n` where n is an integer.
   * default `20`
 * `--status foo` or `-s foo`
