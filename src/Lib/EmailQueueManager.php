@@ -9,7 +9,6 @@ use Cake\Log\Log;
 use Cake\Network\Email\Email;
 use Cake\ORM\TableRegistry;
 use Cake\Utility\Hash;
-use Cake\Utility\Text;
 
 class EmailQueueManager
 {
@@ -87,7 +86,7 @@ class EmailQueueManager
         # load in the config data
         $this->_configMaster = Configure::read('EmailQueue.master');
         $this->_configDefault = Configure::read('EmailQueue.default');
-        $this->_configOverride = ($master['testingModeOverride']) ? Configure::read('EmailQueue.override') : [];
+        $this->_configOverride = ($this->_configMaster['testingModeOverride']) ? Configure::read('EmailQueue.override') : [];
 
     }
 
@@ -229,6 +228,14 @@ class EmailQueueManager
             $config['viewVars']['_message_text'] = $config['message_text'];
         endif;
 
+        # convert processor list to an array if not already
+        $config['processor'] = (is_string($config['processor'])) ? [$config['processor']] : $config['processor'];
+
+        # load the processors (in order) and run the config thru them
+        foreach ($config['processor'] as $processor) :
+          call_user_func_array([$processor,'process'], [&$config]);
+        endforeach;
+
         # finally, pare down to values we can pass to Email::profile()
         $config = array_intersect_key($config, array_filter($this->_accessible));
 
@@ -254,9 +261,9 @@ class EmailQueueManager
           if (!$specific) :
             throw new RecordNotFoundException("Cannot find EmailQueue type '{$email->type}' in EmailTemplates table.");
           endif;
-          $specific->toArray();
+          pj($specific->toArray());
+          $specific = $specific->toArray();
         endif;
-
         # merge all the configs into one final complete array
         $config = Hash::merge($this->_configDefault, $specific, $email->toArray(), $this->_configOverride, $this->_configMaster);
 
