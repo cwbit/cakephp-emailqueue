@@ -31,7 +31,7 @@ class AddEmailTemplates extends AbstractMigration
             ->addColumn('viewVars', 'string', ['null'=>true, 'limit'=>Adapter::TEXT_REGULAR])     #: If you are using rendered content, set the array with variables to be used in the view. See Email::viewVars().
             ->addColumn('attachments', 'string', ['null'=>true])  #: List of files to attach. See Email::attachments().
             ->addColumn('emailFormat', 'string', ['null'=>true,'default'=>'both'])  #: Format of email (html, text or both). See Email::emailFormat().
-            ->addColumn('transport', 'string', ['null'=>true])    #: Transport configuration name. See Network\Email\Email::configTransport().
+            ->addColumn('transport', 'string', ['null'=>true, 'default'=>'default'])    #: Transport configuration name. See Network\Email\Email::configTransport().
             ->addColumn('log', 'string', ['null'=>true])          #: Log level to log the email headers and message. true will use LOG_DEBUG. See also CakeLog::write()
             ->addColumn('helpers', 'string', ['null'=>true, 'default' => '["Markdown.Markdown"]'])      #: Array of helpers used in the email template.            ->addColumn('created', 'datetime')
             ->addColumn('created', 'datetime')
