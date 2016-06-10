@@ -64,10 +64,12 @@ return [
          * Things like the default 'from' setting can be set in here and will apply to all emails unless replaced by values from the DATABASE, a SPECIFIC template setting, or the OVERRIDE
          */
         'default' => [
+            'processor'         => ['EmailQueue\Processor\MustacheProcessor','EmailQueue\Processor\MarkdownProcessor'],
             'cc'                => ['default_cc@email.com'],
             'emailFormat'       => 'both',
             'from'              => 'default_sender@email.com',
             'layout'            => 'EmailQueue.default',
+            'transport'         => 'default',
             ], # end of DEFAULT
 
 
@@ -86,19 +88,19 @@ return [
          *     }
          *
          */
-        'specific' => [
-            'demo' => [
-                'subject'       => 'This is just a test!',
-                'template'      => 'EmailQueue.test',
-                'emailFormat'   => 'html',
-                'viewVars'      => [
-                    'name'      => 'User',
-                    'version'   => '123',
-                    'foo'       => 'bar',
-                    ],
-                ], # end of type `test`
-            ], # end of SPECIFIC
-        ] # end of EmailQueue configs
+        // 'specific' => [
+        //     'demo' => [
+        //         'subject'       => 'This is just a test!',
+        //         'template'      => 'EmailQueue.test',
+        //         'emailFormat'   => 'html',
+        //         'viewVars'      => [
+        //             'name'      => 'User',
+        //             'version'   => '123',
+        //             'foo'       => 'bar',
+        //             ],
+        //         ], # end of type `test`
+        //     ], # end of SPECIFIC
+        // ] # end of EmailQueue configs
 
 
     ];
