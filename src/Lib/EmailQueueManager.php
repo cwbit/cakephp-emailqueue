@@ -16,13 +16,14 @@ class EmailQueueManager
     const STATUS_SENT = 'sent';
     const STATUS_ERROR = 'error';
     const STATUS_PENDING = 'pending';
+
     /**
      * List of usable email variables for Email::profile()
      *
-     * This is identical to Entity::$_accessible with the exception that there is no '*' (wildcard) allowed
+     * This is identical to Entity::$_profileKeys with the exception that there is no '*' (wildcard) allowed
      * @var array
      */
-    private $_accessible = [
+    private $_profileKeys = [
         'from' => true,         #: Email or array of sender. See Email::from().
         'sender' => true,       #: Email or array of real sender. See Email::sender().
         'to' => true,           #: Email or array of destination. See Email::to().
@@ -33,7 +34,7 @@ class EmailQueueManager
         'returnPath' => true,   #: Email address or and array of addresses to return if have some error. See Email::returnPath().
         'messageId' => true,    #: Message ID of e-mail. See Email::messageId().
         'subject' => true,      #: Subject of the message. See Email::subject().
-        'message' => false, # NOT SUPPORTED  #: Content of message. Do not set this field if you are using rendered content.
+        'message' => false,     # NOT SUPPORTED  #: Content of message. Do not set this field if you are using rendered content.
         'headers' => true,      #: Headers to be included. See Email::setHeaders().
         'viewRender' => true,   #: If you are using rendered content, set the view classname. See Email::viewRender().
         'template' => true,     #: If you are using rendered content, set the template name. See Email::template().
@@ -105,12 +106,12 @@ class EmailQueueManager
     /**
      * QuickAdd function that accepts basic params; email type, to address, and an array of view variables needed by the email template function
      * @param string $type   email type as defined in the SPECIFIC configuration array
-     * @param string $to_addr     email address of recipient
+     * @param mixed $to_addr     email address of recipient
      * @param array $viewVars array of viewVars expected by the email $type's template (as specified in configuration file)
      *
      * @return void
      */
-    public function quickAdd($type, $to_addr, $viewVars)
+    public function quickAdd($type, $to_addr, array $viewVars)
     {
         return $this->add(compact('type', 'to_addr', 'viewVars') + ['status'=>self::STATUS_PENDING]);
     }
@@ -148,13 +149,8 @@ class EmailQueueManager
 
         # build and send each email
         foreach ($emails as $email) :
-            # get the config settings for this email
             $config = $this->_getConfig($email);
-
-            # build the Email::profile() array
             $profile = $this->_buildProfile($config, $email);
-
-            # build the email using Email::profile([..]) to set the whole thing up at once
             $e = new Email($profile);
 
             # attempt to send the email
@@ -177,15 +173,15 @@ class EmailQueueManager
                 $email->error = $e->getMessage();
             }
 
-            # log it, yo
+            # log it - include as much relevant data as possible
             $e = $e->jsonSerialize();
             $log = $this->EmailLogs->newEntity([
               'email_id' => $email->id,
               'email_type' => $email->type,
               'email_data' => [
+                'email' => $e,
                 'config' => $config,
                 'profile' => $email->toArray(),
-                'email' => $e,
               ],
               'sent_to' => $e['_to'],
               'sent_from' => $e['_from'],
@@ -200,7 +196,7 @@ class EmailQueueManager
             if ($config['deleteAfterSend'] && $email->status === self::STATUS_SENT) :
                 $this->EmailQueues->delete($email);
             else :
-            #    $this->EmailQueues->save($email);
+                $this->EmailQueues->save($email);
             endif;
 
             $result[] = $email;
@@ -213,39 +209,30 @@ class EmailQueueManager
 
     /**
      * Convert the configuration settings into something ingestible by Email::profile()
+     *
+     * @param array $config array of config values to be built and processed into an Email profile
+     * @return array config array ready to be injected into Email::profile()
      */
     protected function _buildProfile(array $config)
     {
-        # two types of emails are supported,
-        # rendered (uses layout ONLY) or dynamic-rendered (uses layout to render _message_html or _message_text)
-        # this will pipe the message bodies (if specified) into viewVars (prefixed with '_' to avoid collision with actual viewVars)
-        if (isset($config['message_html']) && !is_null($config['message_html'])) :
-            $config['viewVars']['_message_html'] = $config['message_html'];
-        endif;
-        if (isset($config['message_text']) && !is_null($config['message_text'])) :
-            $config['viewVars']['_message_text'] = $config['message_text'];
-        endif;
+        # if `message_html` or `message_text` are set (in EmailTemplate), stuff them into viewVars with `_` (prefix) to avoid collisions
+        foreach (['message_html', 'message_text'] as $message_type) :
+          if (isset($config[$message_type]) && !is_null($config[$message_type])) :
+              $config['viewVars']["_{$message_type}"] = $config[$message_type];
+          endif;
+        endforeach;
 
-        # convert processor list to an array if not already
+        # convert the processor list to an array if not already
         $config['processor'] = (is_string($config['processor'])) ? [$config['processor']] : $config['processor'];
 
-        # load the processors (in order) and run the config thru them
+        # load the processors (in order) and run the config thru them - SUPPORTS new BlahProcessor, or new BlahProcessor($settings)
         foreach ($config['processor'] as $processor => $settings) :
-          # load the processor (with configs if set)
-          if (is_int($processor) && is_string($settings)):
-            $processor = new $settings;
-          elseif(is_string($processor) && !is_null($settings)):
-            $processor = new $processor($settings);
-          else :
-            throw new Exception("Could not load processor [$processor => $settings]");
-          endif;
-
-          # run the config thru them to be manipulated
+          $processor = (is_string($processor)) ? new $processor($settings) : new $settings;
           $processor->process($config);
         endforeach;
 
         # finally, pare down to values we can pass to Email::profile()
-        $config = array_intersect_key($config, array_filter($this->_accessible));
+        $config = array_intersect_key($config, array_filter($this->_profileKeys));
 
         return $config;
     }
@@ -253,7 +240,7 @@ class EmailQueueManager
     /**
      * Builds a complete set of configuration settings by reading in several config arrays and merging them according to priority
      * This works by loading the configuration settings first for all emails, then the specific email type, then the email settings itself, and finally giving the testing-mode override and master settings the highest priority
-     * This function supports the old style of declaring the 'specific' email type settings in the Config array, but the preferred method is through an EmailTemplate
+     * This function supports the deprecated style of declaring the 'specific' email type settings in the Config array, but the preferred method is through an EmailTemplate
      * @param Entity $email email entity
      * @return array complete configuration array
      */
@@ -263,15 +250,15 @@ class EmailQueueManager
         # get the specific details for the email.type
         # either from the config file (for backward-compat) or the database
         if (Configure::check("EmailQueue.specific.{$email->type}")) :
-          $specific = Configure::read('EmailQueue.specific.'.$email->type);
+          $specific = Configure::read('EmailQueue.specific.'.$email->type); # DEPRECATED
         else :
           $specific = $this->EmailTemplates->find()->where(['EmailTemplates.email_type' => $email->type])->first();
           if (!$specific) :
-            throw new RecordNotFoundException("Cannot find EmailQueue type '{$email->type}' in EmailTemplates table.");
+            throw new RecordNotFoundException("Cannot find config template for EmailQueue type '{$email->type}' anywhere.");
           endif;
-          pj($specific->toArray());
           $specific = $specific->toArray();
         endif;
+
         # merge all the configs into one final complete array
         $config = Hash::merge($this->_configDefault, $specific, $email->toArray(), $this->_configOverride, $this->_configMaster);
 
@@ -287,9 +274,7 @@ class EmailQueueManager
      */
     private function _formatConfig(array $config)
     {
-        # remap keys (if any)
         $config = $this->_remapKeys($config);
-
         return $config;
     }
 

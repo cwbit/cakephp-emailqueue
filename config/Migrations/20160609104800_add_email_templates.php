@@ -11,6 +11,9 @@ class AddEmailTemplates extends AbstractMigration
         $table
             ->addColumn('id', 'uuid')
             ->addColumn('email_type', 'string', ['null'=>false])
+            ->addColumn('subject', 'string', ['null'=>false])     #: Subject of the message. See Email::subject().
+            ->addColumn('message_html', 'text', ['null'=>true, 'limit'=>Adapter::TEXT_REGULAR])   #: Message body for HTML messages (OPTIONAL)
+            ->addColumn('message_text', 'text', ['null'=>false, 'limit'=>Adapter::TEXT_REGULAR])  #: Message body for TEXT-ONLY messages (REQUIRED)
             ->addColumn('from_addr', 'string', ['null'=>true])        #: Email or array of sender. See Email::from().
             ->addColumn('sender_addr', 'string', ['null'=>true])       #: Email or array of real sender. See Email::sender().
             ->addColumn('to_addr', 'string', ['null'=>true])          #: Email or array of destination. See Email::to().
@@ -20,9 +23,6 @@ class AddEmailTemplates extends AbstractMigration
             ->addColumn('readReceipt', 'string', ['null'=>true])  #: Email address or an array of addresses to receive the receipt of read. See Email::readReceipt().
             ->addColumn('returnPath', 'string', ['null'=>true])   #: Email address or and array of addresses to return if have some error. See Email::returnPath().
             ->addColumn('messageId', 'string', ['null'=>true])    #: Message ID of e-mail. See Email::messageId().
-            ->addColumn('subject', 'string', ['null'=>false])     #: Subject of the message. See Email::subject().
-            ->addColumn('message_html', 'text', ['null'=>true, 'limit'=>Adapter::TEXT_REGULAR])   #: Message body for HTML messages (OPTIONAL)
-            ->addColumn('message_text', 'text', ['null'=>false, 'limit'=>Adapter::TEXT_REGULAR])  #: Message body for TEXT-ONLY messages (REQUIRED)
             ->addColumn('headers', 'string', ['null'=>true])      #: Headers to be included. See Email::setHeaders().
             ->addColumn('viewRender', 'string', ['null'=>true])   #: If you are using rendered content, set the view classname. See Email::viewRender().
             ->addColumn('template', 'string', ['null'=>true])     #: If you are using rendered content, set the template name. See Email::template().
@@ -32,8 +32,9 @@ class AddEmailTemplates extends AbstractMigration
             ->addColumn('attachments', 'string', ['null'=>true])  #: List of files to attach. See Email::attachments().
             ->addColumn('emailFormat', 'string', ['null'=>true,'default'=>'both'])  #: Format of email (html, text or both). See Email::emailFormat().
             ->addColumn('transport', 'string', ['null'=>true, 'default'=>'default'])    #: Transport configuration name. See Network\Email\Email::configTransport().
+            ->addColumn('processor', 'string', ['null'=>true])    #: Transport configuration name. See Network\Email\Email::configTransport().
             ->addColumn('log', 'string', ['null'=>true])          #: Log level to log the email headers and message. true will use LOG_DEBUG. See also CakeLog::write()
-            ->addColumn('helpers', 'string', ['null'=>true, 'default' => '["Markdown.Markdown"]'])      #: Array of helpers used in the email template.            ->addColumn('created', 'datetime')
+            ->addColumn('helpers', 'string', ['null'=>true, 'default' => '["Markdown.Markdown"]'])      #: Array of helpers used in the email template
             ->addColumn('created', 'datetime')
             ->addColumn('modified', 'datetime')
             ->create();

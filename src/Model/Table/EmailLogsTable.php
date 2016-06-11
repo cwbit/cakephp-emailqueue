@@ -5,6 +5,9 @@ namespace EmailQueue\Model\Table;
 use Cake\ORM\Table as Table;
 use Cake\Database\Schema\Table as Schema;
 
+/**
+ * The EmailLogsTable stores details on EmailQueue objects that have been processed by the EmailQueueManager
+ */
 class EmailLogsTable extends Table{
       /**
     	 * Tell CakePHP to modify the data structure of the entity data types

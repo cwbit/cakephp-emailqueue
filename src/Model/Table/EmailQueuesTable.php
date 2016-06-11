@@ -8,6 +8,10 @@ use Cake\ORM\Query;
 use Cake\Validation\Validator;
 use Cake\ORM\Behavior\TimestampBehavior;
 
+/**
+ * The EmailQueueTable holds the emails that have been Queued by the EmailQueueManager and are awaiting processing.
+ * The EmailQueueManager will run thru this table looking for emails to send and will update/delete them from the Queue as they are processed.
+ */
 class EmailQueuesTable extends Table{
 
 	/**
