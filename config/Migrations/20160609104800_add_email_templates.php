@@ -25,7 +25,7 @@ class AddEmailTemplates extends AbstractMigration
             ->addColumn('messageId', 'string', ['null'=>true])    #: Message ID of e-mail. See Email::messageId().
             ->addColumn('headers', 'string', ['null'=>true])      #: Headers to be included. See Email::setHeaders().
             ->addColumn('viewRender', 'string', ['null'=>true])   #: If you are using rendered content, set the view classname. See Email::viewRender().
-            ->addColumn('template', 'string', ['null'=>true])     #: If you are using rendered content, set the template name. See Email::template().
+            ->addColumn('template', 'string', ['default'=>"EmailQueue.default"])     #: If you are using rendered content, set the template name. See Email::template().
             ->addColumn('theme', 'string', ['null'=>true])        #: Theme used when rendering template. See Email::theme().
             ->addColumn('layout', 'string', ['default'=>"EmailQueue.default"])       #: If you are using rendered content, set the layout to render. If you want to render a template without layout, set this field to null. See Email::template().
             ->addColumn('viewVars', 'string', ['null'=>true, 'limit'=>Adapter::TEXT_REGULAR])     #: If you are using rendered content, set the array with variables to be used in the view. See Email::viewVars().
@@ -34,7 +34,7 @@ class AddEmailTemplates extends AbstractMigration
             ->addColumn('transport', 'string', ['null'=>true, 'default'=>'default'])    #: Transport configuration name. See Network\Email\Email::configTransport().
             ->addColumn('processor', 'string', ['null'=>true])    #: Transport configuration name. See Network\Email\Email::configTransport().
             ->addColumn('log', 'string', ['null'=>true])          #: Log level to log the email headers and message. true will use LOG_DEBUG. See also CakeLog::write()
-            ->addColumn('helpers', 'string', ['null'=>true, 'default' => '["Markdown.Markdown"]'])      #: Array of helpers used in the email template
+            ->addColumn('helpers', 'string', ['null'=>true])      #: Array of helpers used in the email template
             ->addColumn('created', 'datetime')
             ->addColumn('modified', 'datetime')
             ->create();
