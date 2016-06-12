@@ -1,4 +1,4 @@
-<?
+<?php
 use Cake\Routing\Router;
 use Cake\Core\Configure;
 

@@ -1,11 +1,11 @@
-<?
+<?php
 
 namespace EmailQueue\Model\Entity;
 
 use Cake\ORM\Entity;
 
 class EmailQueue extends Entity {
-	
+
 	/**
 	 * Array of database fields that can be mass-assigned by newEntities or patchEntities
 	 * @var array
