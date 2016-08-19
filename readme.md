@@ -58,8 +58,47 @@ The default `provider`(s) in `Configure::('EmailQueue.default.provider')` allow 
 # Plugin Usage
 Actually sending email with EmailQueue is a simple two-step process
 
-1. Queue the email
+1. Set up the Template
+2. Queue the email
 2. Process the email queue (CRON)
+
+#### Set up the Template
+
+Templates in this version of the plugin can fully support both **Mustache** and **Markdown** and are processed in that order (by default) - so Mustache variables are expanded first, and then the whole thing is parsed into HTML thru Markdown.
+
+To set up a template, add a record for the `email_type` (e.g. `order-confirmation`) in the database, set some basic meta info like `subject` and add a `message_text` and `message_html` block.
+
+If you take a look in the `EmailQueue\config\Seeds\EmailTemplatesSeed.php` you can see an example of a `contact` email.
+
+The `view_vars` can either be passed in when Queuing the email, or set by default in the `EmailTemplate` or both. They are passed to the email processors in exactly the same way that view variables are passed to the view file from a controller, and so will be accessible by name in **Mustache**'s `{{varName}}` format (if you're using the default processor).
+
+Ok, let's look at an actual email template example for something like `email_type = order-confirmation`.
+
+If we assume that `$order` is a entity with order details that we've passed in when Queuing the email (see next section), then we can set `view_vars` to `array('order'=>$order)` and then in our template record set `message_html` and/or `message_text` to something like this
+ ```
+# Order Confirmation
+
+Hello, {{order.name}}
+
+You ordered the following
+{{#order.items}}
+ * Item Name: {{name}}; Price: {{price}}
+{{/order.items}}
+```
+
+Which, when sent, would get parsed out into the following (using default processors)
+
+```
+<h1>Order Confirmation</h1>
+
+Hello, Arthur Dent
+
+You ordered the following
+
+<ul>
+	<li>Item Name: Hitchhikers Guide; Price: $100000</li>
+</ul>
+```
 
 #### Queue an Email
 Add the EmailQueue component to your controller
