@@ -33,13 +33,19 @@ class EmailTemplatesSeed extends AbstractSeed
           'message_html' =>"
 # New Contact Request
 
-Hi there. Someone just filled out the contact form on your site.
+Hi there! Someone just filled out the contact form on your site.
 
-Name: {{name}}
-Email: {{email}}
-Phone: {{phone}}
-Message:
-{{message}}
+**Name:**
+> {{name}}
+
+**Email:**
+> {{email}}
+
+**Phone:**
+> {{phone}}
+
+**Message:**
+> {{message}}
           ",
           'message_text' => "
 New Contact Request\n
