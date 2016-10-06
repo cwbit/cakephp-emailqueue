@@ -85,9 +85,10 @@ class EmailQueueManager
         $this->EmailLogs = TableRegistry::get('EmailQueue.EmailLogs');
 
         # load in the config data
-        $this->_configMaster = Configure::read('EmailQueue.master');
-        $this->_configDefault = Configure::read('EmailQueue.default');
+        $this->_configMaster = $this->_array_filter(Configure::read('EmailQueue.master'));
+        $this->_configDefault = $this->_array_filter(Configure::read('EmailQueue.default'));
         $this->_configOverride = ($this->_configMaster['testingModeOverride']) ? Configure::read('EmailQueue.override') : [];
+          $this->_configOverride = $this->_array_filter($this->_configOverride);
 
     }
 
@@ -250,17 +251,17 @@ class EmailQueueManager
         # get the specific details for the email.type
         # either from the config file (for backward-compat) or the database
         if (Configure::check("EmailQueue.specific.{$email->type}")) :
-          $specific = Configure::read('EmailQueue.specific.'.$email->type); # DEPRECATED
+          $specific = $this->_array_filter(Configure::read('EmailQueue.specific.'.$email->type)); # DEPRECATED
         else :
           $specific = $this->EmailTemplates->find()->where(['EmailTemplates.email_type' => $email->type])->first();
           if (!$specific) :
             throw new RecordNotFoundException("Cannot find config template for EmailQueue type '{$email->type}' anywhere.");
           endif;
-          $specific = $specific->toArray();
+          $specific = $this->_array_filter($specific->toArray());
         endif;
 
         # merge all the configs into one final complete array
-        $config = Hash::merge($this->_configDefault, $specific, $email->toArray(), $this->_configOverride, $this->_configMaster);
+        $config = Hash::merge($this->_configDefault, $specific, $this->_array_filter($email->toArray()), $this->_configOverride, $this->_configMaster);
 
         # return a useable config array
         return $this->_formatConfig($config);
@@ -296,5 +297,27 @@ class EmailQueueManager
         endforeach;
 
         return $config;
+    }
+
+    /**
+     * Filters elements out of the array that we don't want
+     *
+     * The intended use of this function is to rip NULL values out before the arrays are merged
+     * @param array $array the array to filter
+     * @return array the filtered array
+     */
+    private function _array_filter($array)
+    {
+      return array_filter(
+        $array,
+        function($value, $key){
+          switch ($key) {
+            default:
+              return !is_null($value);
+              break;
+          }
+        },
+        ARRAY_FILTER_USE_BOTH
+       );
     }
 }
