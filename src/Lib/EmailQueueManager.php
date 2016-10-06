@@ -23,7 +23,7 @@ class EmailQueueManager
      * This is identical to Entity::$_profileKeys with the exception that there is no '*' (wildcard) allowed
      * @var array
      */
-    private $_profileKeys = [
+    protected $_profileKeys = [
         'from' => true,         #: Email or array of sender. See Email::from().
         'sender' => true,       #: Email or array of real sender. See Email::sender().
         'to' => true,           #: Email or array of destination. See Email::to().
@@ -54,7 +54,7 @@ class EmailQueueManager
      * E.g. we need to remap 'to_addr' (from the config) into 'to' (the Email class function) because `to` is a reserved word in MySQL so we can't use it as the database column
      * @var array
      */
-    private $_map = [
+    protected $_map = [
         'to_addr' => 'to',      # change key 'to_addr' to 'to'
         'cc_addr' => 'cc',      # change key 'cc_addr' to 'cc'
         'bcc_addr' => 'bcc',    # change key 'bcc_addr' to 'bcc'
@@ -260,8 +260,12 @@ class EmailQueueManager
           $specific = $this->_array_filter($specific->toArray());
         endif;
 
+        # convert DB record to formatted array
+        $email = $this->_remapKeys($email->toArray());
+        $email = $this->_array_filter($email);
+
         # merge all the configs into one final complete array
-        $config = Hash::merge($this->_configDefault, $specific, $this->_array_filter($email->toArray()), $this->_configOverride, $this->_configMaster);
+        $config = Hash::merge($this->_configDefault, $specific, $email, $this->_configOverride, $this->_configMaster);
 
         # return a useable config array
         return $this->_formatConfig($config);
@@ -275,7 +279,7 @@ class EmailQueueManager
      */
     private function _formatConfig(array $config)
     {
-        $config = $this->_remapKeys($config);
+        // $config = $this->_remapKeys($config);
         return $config;
     }
 
