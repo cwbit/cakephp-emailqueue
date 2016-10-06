@@ -6,6 +6,7 @@ use Cake\Console\Shell;
 use Cake\Core\Configure;
 use EmailQueue\Lib\EmailQueueManager;
 use Cake\Log\Log;
+use Cake\ORM\TableRegistry;
 
 class ProcessShell extends Shell
 {
@@ -29,7 +30,9 @@ class ProcessShell extends Shell
                 ]);
 
         # build a list of possible types from the config file
-        $types = array_keys(Configure::read('EmailQueue.specific')) ?: [];
+        $_dbTypes = TableRegistry::get('EmailTemplates')->find()->all()->extract('email_type')->toArray();
+        $_configTypes = array_keys(Configure::read('EmailQueue.specific'));
+        $types = array_merge($_dbTypes, $_configTypes);
         $parser
             ->addOption('type', [
                 'short' => 't',
