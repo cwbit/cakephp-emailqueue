@@ -30,8 +30,8 @@ return [
          * These will only be used if { testingmodeOverride === true } in MASTER settings
          */
         'override' => [
-            'from'              => 'override_sender@email.com',
-            'to'                => 'override_to@email.com',
+            //'from'              => 'override_sender@email.com',
+            //'to'                => 'override_to@email.com',
             'transport'         => 'test',
             ], # end of OVERRIDE
 
@@ -43,9 +43,9 @@ return [
          */
         'default' => [
             'processor'         => ['EmailQueue\Processor\MustacheProcessor','EmailQueue\Processor\MarkdownProcessor'],
-            'cc'                => ['Support'=>'default_cc@email.com'],
+            'cc'                => ['default_cc@email.com'=> 'Support'],
+            'from'              => ['default_sender@email.com' => 'Support'],
             'emailFormat'       => 'both',
-            'from'              => ['Support'=>'default_sender@email.com'],
             'layout'            => 'EmailQueue.default',
             'transport'         => 'default',
             ], # end of DEFAULT
