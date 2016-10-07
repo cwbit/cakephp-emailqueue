@@ -33,6 +33,7 @@ class EmailQueuesTable extends Table{
 	 */
 	protected function _initializeSchema(Schema $schema) {
         $schema->columnType('viewVars', 'json');
+        $schema->columnType('to_addr', 'json');
         return $schema;
     }
 
@@ -43,12 +44,12 @@ class EmailQueuesTable extends Table{
 	 */
 	public function validationDefault( Validator $validator ) {
 		$validator
-			->requirePresence('type', 'create')
-			->notEmpty('type')
+			->requirePresence('email_type', 'create')
+			->notEmpty('email_type')
 			->requirePresence('to_addr', 'create')
-			->notEmpty('to_addr')
-			->requirePresence('viewVars', 'create')
-			->notEmpty('viewVars');
+			->notEmpty('to_addr');
+			// ->requirePresence('viewVars', 'create')
+			// ->notEmpty('viewVars');
 
 		return $validator;
 	}

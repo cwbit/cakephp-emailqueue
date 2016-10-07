@@ -11,7 +11,7 @@ class EmailQueue extends Entity {
 	 * @var array
 	 */
 	protected $_accessible = [
-			'type' => true,
+			'email_type' => true,
 			'to_addr' => true,
 			'status' => true,
 			'sent_on' => true,

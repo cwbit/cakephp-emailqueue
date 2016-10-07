@@ -99,6 +99,7 @@ class EmailQueueManager
      */
     public function add(array $vars)
     {
+        $vars += ['status'=>self::STATUS_PENDING];
         $email = $this->EmailQueues->newEntity($vars);
         $this->EmailQueues->save($email);
         return $email;
@@ -112,9 +113,9 @@ class EmailQueueManager
      *
      * @return void
      */
-    public function quickAdd($type, $to_addr, array $viewVars)
+    public function quickAdd($email_type, $to_addr, array $viewVars)
     {
-        return $this->add(compact('type', 'to_addr', 'viewVars') + ['status'=>self::STATUS_PENDING]);
+        return $this->add(compact('email_type', 'to_addr', 'viewVars') + ['status'=>self::STATUS_PENDING]);
     }
 
     /**
@@ -139,7 +140,10 @@ class EmailQueueManager
             $emails->limit($options['limit']);
         endif;
         if (isset($options['type'])) :
-            $emails->where(['EmailQueues.type' => $options['type']]);
+            $emails->where(['EmailQueues.email_type' => $options['type']]);
+        endif;
+        if (isset($options['email_type'])) :
+            $emails->where(['EmailQueues.email_type' => $options['email_type']]);
         endif;
         if (isset($options['status'])) :
             $emails->where(['EmailQueues.status' => $options['status']]);
@@ -178,7 +182,7 @@ class EmailQueueManager
             $e = $e->jsonSerialize();
             $log = $this->EmailLogs->newEntity([
               'email_id' => $email->id,
-              'email_type' => $email->type,
+              'email_type' => $email->email_type,
               'email_data' => [
                 'email' => $e,
                 'config' => $config,
@@ -250,12 +254,12 @@ class EmailQueueManager
 
         # get the specific details for the email.type
         # either from the config file (for backward-compat) or the database
-        if (Configure::check("EmailQueue.specific.{$email->type}")) :
-          $specific = $this->_array_filter(Configure::read('EmailQueue.specific.'.$email->type)); # DEPRECATED
+        if (Configure::check("EmailQueue.specific.{$email->email_type}")) :
+          $specific = $this->_array_filter(Configure::read('EmailQueue.specific.'.$email->email_type)); # DEPRECATED
         else :
-          $specific = $this->EmailTemplates->find()->where(['EmailTemplates.email_type' => $email->type])->first();
+          $specific = $this->EmailTemplates->find()->where(['EmailTemplates.email_type' => $email->email_type])->first();
           if (!$specific) :
-            throw new RecordNotFoundException("Cannot find config template for EmailQueue type '{$email->type}' anywhere.");
+            throw new RecordNotFoundException("Cannot find config template for EmailQueue type '{$email->email_type}' anywhere.");
           endif;
           $specific = $this->_array_filter($specific->toArray());
         endif;
