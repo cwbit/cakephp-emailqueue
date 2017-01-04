@@ -280,9 +280,9 @@ class EmailQueueManager
         # convert DB record to formatted array
         $email = $this->_remapKeys($email->toArray());
         $email = $this->_array_filter($email);
-
-        # merge all the configs into one final complete array
         $specific = $this->_remapKeys($specific);
+
+        # merge all the configs into one final complete array (order is least -> most important)
         $config = Hash::merge($this->_configDefault, $specific, $email, $this->_configOverride, $this->_configMaster);
 
         # return a useable config array
