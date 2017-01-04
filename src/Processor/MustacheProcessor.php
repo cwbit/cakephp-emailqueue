@@ -4,6 +4,7 @@ namespace EmailQueue\Processor;
 
 use EmailQueue\Processor\Processor;
 use Mustache_Engine as Mustache;
+use Cake\Utility\Hash;
 
 /**
  * Add the MustacheProcessor to your email's list of processors to parse the message bodies thru the Mustache Templateing Engine
@@ -15,25 +16,33 @@ class MustacheProcessor extends Processor
 
   /**
    * @var array of fields to process
-   * @todo currently only supports fields inside viewVars
    */
     protected $_fields = [
-      '_message_html',
-      '_message_text',
+      'viewVars._message_html',
+      'viewVars._message_text',
     ];
+
+    /**
+     * Hash path for the data to be passed to Mustache
+     */
+    protected $_dataPath = 'viewVars';
 
     /**
      * Runs Mustache templating against $field given $config['viewVars']
      * @param string $field field to process
      * @param array $config data to use when processing
-     * @todo currently doesnt support anything outside of viewVars[$field]
      */
     protected function _process($field, array $config)
     {
-      if (isset($config['viewVars'][$field])) :
-        $config['viewVars'][$field] = (new Mustache)->render($config['viewVars'][$field], $config['viewVars']);
+      if (Hash::check($config, $field)) :
+        return Hash::insert(
+            $config,
+            $field,
+            (new Mustache)->render(
+              Hash::get($config, $field),
+              Hash::get($config, $this->getDataPath()))
+            );
       endif;
-
       return $config;
     }
 

@@ -24,7 +24,7 @@ class MarkdownProcessorTest extends TestCase
         '_message_html' => "<h1>Header</h1>",
       ]
     ];
-    $this->Processor->process($raw);
-    $this->assertEquals($expected, $raw);
+    $processed = $this->Processor->process($raw);
+    $this->assertEquals($expected, $processed);
   }
 }

@@ -21,7 +21,23 @@ class MustacheProcessorTest extends TestCase
       ]
     ];
     $expected = "Hello, World!";
-    $this->Processor->process($raw);
-    $this->assertEquals($expected, $raw['viewVars']['_message_html']);
+    $processed = $this->Processor->process($raw);
+    $this->assertEquals($expected, $processed['viewVars']['_message_html']);
   }
+
+  # demonstrate how to set things like `to_addr` programmatically
+  public function testProcessToAddr()
+  {
+    $raw = [
+      'to' => [ 0 => "{{email}}"],
+      'viewVars' => [
+        'email' => 'user@example.com'
+      ]
+    ];
+    $expected = [ 0 => "user@example.com"];
+    $fields = $this->Processor->setFields(['to.0']);
+    $processed = $this->Processor->process($raw);
+    $this->assertEquals($expected, $processed['to']);
+  }
+
 }
