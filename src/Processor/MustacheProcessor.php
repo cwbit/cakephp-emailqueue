@@ -36,4 +36,22 @@ class MustacheProcessor extends Processor
 
       return $config;
     }
+
+    /**
+     * setter for where we can find the data for Mustache to insert
+     * @param string $dataPath to process
+     */
+    public function setDataPath(string $dataPath)
+    {
+      $this->_dataPath = $dataPath;
+    }
+
+    /**
+     * getter for where we can find the data for Mustache to insert
+     * @return string $dataPath to process
+     */
+    public function getDataPath()
+    {
+      return $this->_dataPath;
+    }
 }
