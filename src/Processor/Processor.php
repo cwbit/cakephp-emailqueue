@@ -9,7 +9,8 @@ namespace EmailQueue\Processor;
  */
 class Processor
 {
-  public function process(array &$config)
+  public function process(array $config)
   {
+    return $config;
   }
 }

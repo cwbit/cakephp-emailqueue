@@ -15,7 +15,7 @@ class MustacheProcessor extends Processor
     /**
      * Converts viewVars._message_html and viewVars._message_text
      */
-    public function process(array &$config)
+    public function process(array $config)
     {
       # run _message_html thru Mustache
       if (isset($config['viewVars']['_message_html'])) :
@@ -26,5 +26,7 @@ class MustacheProcessor extends Processor
       if (isset($config['viewVars']['_message_text'])) :
         $config['viewVars']['_message_text'] = (new Mustache)->render($config['viewVars']['_message_text'], $config['viewVars']);
       endif;
+
+      return $config;
     }
 }

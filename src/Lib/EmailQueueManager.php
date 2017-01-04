@@ -227,19 +227,32 @@ class EmailQueueManager
           endif;
         endforeach;
 
-        # convert the processor list to an array if not already
-        $config['processor'] = (is_string($config['processor'])) ? [$config['processor']] : $config['processor'];
-
-        # load the processors (in order) and run the config thru them - SUPPORTS new BlahProcessor, or new BlahProcessor($settings)
-        foreach ($config['processor'] as $processor => $settings) :
-          $processor = (is_string($processor)) ? new $processor($settings) : new $settings;
-          $processor->process($config);
-        endforeach;
+        # run the email through its specified processors
+        $config = $this->_process($config);
 
         # finally, pare down to values we can pass to Email::profile()
         $config = array_intersect_key($config, array_filter($this->_profileKeys));
 
         return $config;
+    }
+
+    /**
+     * Takes an email $config and runs it's `processor` list on the email data (e.g. to update message body with Markdown/Mustache/etc.)
+     * @param array $config the email config containing both data and the processor list
+     * @return array $config the processed (modified) email config
+     */
+    protected function _process(array $config)
+    {
+      # convert the processor list to an array if not already
+      $config['processor'] = (is_string($config['processor'])) ? [$config['processor']] : $config['processor'];
+
+      # load the processors (in order) and run the config thru them - SUPPORTS new Processor || new Processor($settings)
+      foreach ($config['processor'] as $processor => $settings) :
+        $processor = (is_string($processor)) ? new $processor($settings) : new $settings;
+        $config = $processor->process($config);
+      endforeach;
+
+      return $config;
     }
 
     /**
