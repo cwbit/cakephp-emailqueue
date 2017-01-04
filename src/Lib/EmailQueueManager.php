@@ -257,33 +257,27 @@ class EmailQueueManager
 
     /**
      * Builds a complete set of configuration settings by reading in several config arrays and merging them according to priority
-     * This works by loading the configuration settings first for all emails, then the specific email type, then the email settings itself, and finally giving the testing-mode override and master settings the highest priority
-     * This function supports the deprecated style of declaring the 'specific' email type settings in the Config array, but the preferred method is through an EmailTemplate
+     * This works by loading the configuration settings first for all emails, then the template email type, then the email settings itself, and finally giving the testing-mode override and master settings the highest priority
      * @param Entity $email email entity
      * @return array complete configuration array
      */
     protected function _getConfig(EmailQueue $email)
     {
 
-        # get the specific details for the email.type
-        # either from the config file (for backward-compat) or the database
-        if (Configure::check("EmailQueue.specific.{$email->email_type}")) :
-          $specific = $this->_array_filter(Configure::read('EmailQueue.specific.'.$email->email_type)); # DEPRECATED
-        else :
-          $specific = $this->EmailTemplates->find()->where(['EmailTemplates.email_type' => $email->email_type])->first();
-          if (!$specific) :
-            throw new RecordNotFoundException("Cannot find config template for EmailQueue type '{$email->email_type}' anywhere.");
-          endif;
-          $specific = $this->_array_filter($specific->toArray());
+        # get the template details for the email.type
+        $template = $this->EmailTemplates->find()->where(['EmailTemplates.email_type' => $email->email_type])->first();
+        if (!$template) :
+          throw new RecordNotFoundException("Cannot find config template for EmailQueue type '{$email->email_type}' anywhere.");
         endif;
+        $template = $this->_array_filter($template->toArray());
+        $template = $this->_remapKeys($template);
 
         # convert DB record to formatted array
         $email = $this->_remapKeys($email->toArray());
         $email = $this->_array_filter($email);
-        $specific = $this->_remapKeys($specific);
 
         # merge all the configs into one final complete array (order is least -> most important)
-        $config = Hash::merge($this->_configDefault, $specific, $email, $this->_configOverride, $this->_configMaster);
+        $config = Hash::merge($this->_configDefault, $template, $email, $this->_configOverride, $this->_configMaster);
 
         # return a useable config array
         return $this->_formatConfig($config);
