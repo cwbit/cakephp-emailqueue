@@ -282,6 +282,7 @@ class EmailQueueManager
         $email = $this->_array_filter($email);
 
         # merge all the configs into one final complete array
+        $specific = $this->_remapKeys($specific);
         $config = Hash::merge($this->_configDefault, $specific, $email, $this->_configOverride, $this->_configMaster);
 
         # return a useable config array
