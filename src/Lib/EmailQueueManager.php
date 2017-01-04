@@ -333,11 +333,12 @@ class EmailQueueManager
         $array,
         function($value, $key){
           switch ($value) {
-            case '':  # strip out ''s
+            case '':
+            case null:
               return false;
               break;
-            default:  # strip out nulls
-              return !is_null($value);
+            default:
+              return true;
               break;
           }
         },
