@@ -43,7 +43,7 @@ return [
          */
         'default' => [
             'processor'         => ['EmailQueue\Processor\MustacheProcessor','EmailQueue\Processor\MarkdownProcessor'],
-            'cc'                => ['default_cc@email.com'=> 'Support'],
+            //'cc'                => ['default_cc@email.com'=> 'Support'],
             'from'              => ['default_sender@email.com' => 'Support'],
             'emailFormat'       => 'both',
             'layout'            => 'EmailQueue.default',
