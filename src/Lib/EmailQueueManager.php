@@ -332,8 +332,11 @@ class EmailQueueManager
       return array_filter(
         $array,
         function($value, $key){
-          switch ($key) {
-            default:
+          switch ($value) {
+            case '':  # strip out ''s
+              return false;
+              break;
+            default:  # strip out nulls
               return !is_null($value);
               break;
           }
