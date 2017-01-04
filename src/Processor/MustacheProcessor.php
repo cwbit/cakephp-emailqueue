@@ -12,19 +12,26 @@ use Mustache_Engine as Mustache;
  */
 class MustacheProcessor extends Processor
 {
-    /**
-     * Converts viewVars._message_html and viewVars._message_text
-     */
-    public function process(array $config)
-    {
-      # run _message_html thru Mustache
-      if (isset($config['viewVars']['_message_html'])) :
-        $config['viewVars']['_message_html'] = (new Mustache)->render($config['viewVars']['_message_html'], $config['viewVars']);
-      endif;
 
-      # run _message_text thru Mustache
-      if (isset($config['viewVars']['_message_text'])) :
-        $config['viewVars']['_message_text'] = (new Mustache)->render($config['viewVars']['_message_text'], $config['viewVars']);
+  /**
+   * @var array of fields to process
+   * @todo currently only supports fields inside viewVars
+   */
+    protected $_fields = [
+      '_message_html',
+      '_message_text',
+    ];
+
+    /**
+     * Runs Mustache templating against $field given $config['viewVars']
+     * @param string $field field to process
+     * @param array $config data to use when processing
+     * @todo currently doesnt support anything outside of viewVars[$field]
+     */
+    protected function _process($field, array $config)
+    {
+      if (isset($config['viewVars'][$field])) :
+        $config['viewVars'][$field] = (new Mustache)->render($config['viewVars'][$field], $config['viewVars']);
       endif;
 
       return $config;

@@ -10,14 +10,24 @@ use Markdown\Engine\Markdown;
  */
 class MarkdownProcessor extends Processor
 {
+  /**
+   * @var array of fields to process
+   * @todo currently only supports fields inside viewVars
+   */
+    protected $_fields = [
+      '_message_html',
+    ];
+
     /**
-     * Converts viewVars._message_html to HTML
+     * Runs Markdown HTML conversion against $field
+     * @param string $field field to process
+     * @param array $config data to use when processing
+     * @todo currently doesnt support anything outside of viewVars[$field]
      */
-    public function process(array $config)
+    protected function _process($field, array $config)
     {
-      # run _message_html thru Markdown
-      if (isset($config['viewVars']['_message_html'])) :
-        $config['viewVars']['_message_html'] = Markdown::toHtml($config['viewVars']['_message_html']);
+      if (isset($config['viewVars'][$field])) :
+        $config['viewVars'][$field] = Markdown::toHtml($config['viewVars'][$field]);
       endif;
 
       return $config;
