@@ -45,9 +45,9 @@ class EmailQueuesTable extends Table{
 	public function validationDefault( Validator $validator ) {
 		$validator
 			->requirePresence('email_type', 'create')
-			->notEmpty('email_type')
-			->requirePresence('to_addr', 'create')
-			->notEmpty('to_addr');
+			->notEmpty('email_type');
+			// ->requirePresence('to_addr', 'create')
+			// ->notEmpty('to_addr');
 			// ->requirePresence('viewVars', 'create')
 			// ->notEmpty('viewVars');
 
