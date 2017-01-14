@@ -21,6 +21,8 @@ class EmailTemplatesSeed extends AbstractSeed
     {
         $data = [[
           'id'          => Text::uuid(),
+          'created'     => (new \DateTime())->format('Y-m-d H:i:s'),
+          'modified'     => (new \DateTime())->format('Y-m-d H:i:s'),
           'email_type'  => 'contact',
           'subject'     => 'New Contact Request',
           'to_addr'     => json_encode(Configure::read('Company.email')),
