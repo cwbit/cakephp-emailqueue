@@ -4,6 +4,7 @@
  * Master configuration file for the EmailQueue Plugin
  *
  * This returns an array of all possible EmailQueue options
+ * These options are merged together by EmailQueue.Lib\EmailQueueManager::_getConfig()
  *     EmailQueue
  *         master
  *            .. plugin-level configuration settings
@@ -27,12 +28,11 @@ return [
          * OVERRIDE settings
          * Priority: HIGHEST (OVERRIDE)
          * These are intended only for use when doing something like testing or hotfixing until a legit patch is introduced
-         * These will only be used if { testingmodeOverride === true } in MASTER settings
+         * These will only be used if { EmailQueue.master.testingModeOverride === true }
          */
         'override' => [
-            //'from'              => 'override_sender@email.com',
-            //'to'                => 'override_to@email.com',
             'transport'         => 'test',
+            // 'to'                => ['override@email.com'=> 'Support'], # e.g. override CC for all emails.
             ], # end of OVERRIDE
 
         /**
@@ -43,11 +43,11 @@ return [
          */
         'default' => [
             'processor'         => ['EmailQueue\Processor\MustacheProcessor','EmailQueue\Processor\MarkdownProcessor'],
-            //'cc'                => ['default_cc@email.com'=> 'Support'],
-            'from'              => ['default_sender@email.com' => 'Support'],
-            'emailFormat'       => 'both',
             'layout'            => 'EmailQueue.default',
+            'emailFormat'       => 'both',
             'transport'         => 'default',
+            'from'              => ['noreply@example.com' => 'Support'],
+            //'cc'                => ['default_cc@email.com'=> 'Support'],
             ], # end of DEFAULT
 
         ] # end of EmailQueue configs
