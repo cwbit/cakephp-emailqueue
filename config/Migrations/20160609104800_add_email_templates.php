@@ -28,7 +28,7 @@ class AddEmailTemplates extends AbstractMigration
             ->addColumn('template', 'string', ['default'=>"EmailQueue.default"])     #: If you are using rendered content, set the template name. See Email::template().
             ->addColumn('theme', 'string', ['null'=>true])        #: Theme used when rendering template. See Email::theme().
             ->addColumn('layout', 'string', ['default'=>"EmailQueue.default"])       #: If you are using rendered content, set the layout to render. If you want to render a template without layout, set this field to null. See Email::template().
-            ->addColumn('viewVars', 'string', ['null'=>true, 'limit'=>Adapter::TEXT_REGULAR])     #: If you are using rendered content, set the array with variables to be used in the view. See Email::viewVars().
+            ->addColumn('viewVars', 'text', ['null'=>true])     #: If you are using rendered content, set the array with variables to be used in the view. See Email::viewVars().
             ->addColumn('attachments', 'string', ['null'=>true])  #: List of files to attach. See Email::attachments().
             ->addColumn('emailFormat', 'string', ['null'=>true,'default'=>'both'])  #: Format of email (html, text or both). See Email::emailFormat().
             ->addColumn('transport', 'string', ['null'=>true, 'default'=>'default'])    #: Transport configuration name. See Network\Email\Email::configTransport().

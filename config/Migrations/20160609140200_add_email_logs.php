@@ -12,7 +12,7 @@ class AddEmailLogs extends AbstractMigration
             ->addColumn('id', 'uuid')
             ->addColumn('email_id', 'uuid')
             ->addColumn('email_type', 'string', ['null'=>true])
-            ->addColumn('email_data', 'string', ['null'=>true, 'limit'=>Adapter::TEXT_REGULAR])
+            ->addColumn('email_data', 'text', ['null'=>true])
             ->addColumn('sent_to', 'string', ['null'=>true])
             ->addColumn('sent_from', 'string', ['null'=>true])
             ->addColumn('sent_on', 'datetime', ['null'=>true])
