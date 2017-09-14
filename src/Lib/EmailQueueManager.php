@@ -76,6 +76,9 @@ class EmailQueueManager
     /**
      * Constructor - sets up the Manager
      * Loads the Tables and reads the global configuration data (nonce)
+     *
+     * Support for EmailQueue.master|default|override is deprecated (but supported)
+     * in favor of the Config = app.php + app-local.php style of configuration inheritance
      */
     public function __construct()
     {
@@ -85,10 +88,21 @@ class EmailQueueManager
         $this->EmailLogs = TableRegistry::get('EmailQueue.EmailLogs');
 
         # load in the config data
-        $this->_configMaster = $this->_array_filter(Configure::read('EmailQueue.master'));
-        $this->_configDefault = $this->_array_filter(Configure::read('EmailQueue.default'));
-        $this->_configOverride = ($this->_configMaster['testingModeOverride']) ? Configure::read('EmailQueue.override') : [];
-          $this->_configOverride = $this->_array_filter($this->_configOverride);
+        $this->_configMaster = $this->_array_filter(
+            Configure::check('EmailQueue.master')
+                ? Configure::read('EmailQueue.master')
+                : Configure::read('EmailQueue')             # with newer style, EmailQueue contains settings at root authority - like app.php and app-local.php
+            );
+        $this->_configDefault = $this->_array_filter(
+            Configure::check('EmailQueue.default')
+                ? Configure::read('EmailQueue.default')
+                : []
+            );
+        $this->_configOverride = $this->_array_filter(
+            isset($this->_configMaster['testingModeOverride']) && $this->_configMaster['testingModeOverride']
+                ? Configure::read('EmailQueue.override')
+                : []
+            );
 
     }
 
